@@ -1,55 +1,32 @@
-# YTG2 — Urban Heat
+# YTG2 — Urban Heat 3D
 
-Static top-down urban action game designed for GitHub Pages.
+Modern 3D top-down urban action game for GitHub Pages.
 
-## Run locally
-
-No package manager or backend is required.
-
-\`\`\`text
-Open index.html in a local static server.
-\`\`\`
-
-A simple option:
-
-\`\`\`bash
-python -m http.server 8080
-\`\`\`
-
-Then open \`http://localhost:8080/\`.
+## Stack
+- Three.js 0.186.1
+- Vite 8.3.3
+- WebGL 2
+- PBR-style MeshStandard / MeshPhysical materials
+- procedural asphalt, concrete, roof and ground textures
+- bump maps and emissive window textures
+- dynamic sun, street lights, headlights and police lights
+- Unreal Bloom post-processing
+- custom GLSL rain shader
+- weather cycle: clear / rain / storm / fog
+- procedural 3D city, traffic and NPCs
+- localStorage save
+- no backend
+- no Vercel
 
 ## Controls
+- WASD — move / drive
+- Shift — sprint
+- E — enter/exit vehicle / interact
+- Space / left mouse — fire
+- R — change weather
+- Esc — pause
 
-- WASD / Arrow keys — movement / driving
-- Shift — sprint on foot
-- E — enter/exit vehicle, start mission
-- Space / left mouse — shoot
-- ESC — pause
-- Save Now — localStorage save
+The visual direction is a modernized GTA III-inspired top-down camera: real 3D buildings, perspective depth, PBR-style surfaces, emissive windows and dynamic weather while keeping a lightweight static-web architecture.
 
-## Gameplay
-
-Three repeatable-style missions form the initial campaign slice:
-
-1. Night Courier — deliver and return.
-2. Hot Vehicle — steal the marked car, lose wanted level, reach garage.
-3. Clean Street — eliminate six gang targets and return to market.
-
-Systems included:
-
-- procedural city map
-- buildings, roads and parks
-- top-down camera with vehicle lead
-- foot movement and sprint
-- drivable vehicles
-- police vehicles and wanted system
-- NPC civilians and gang enemies
-- shooting and collision
-- mission markers
-- minimap
-- cash, score, health and stamina
-- local save
-- procedural sound effects
-- GitHub Pages deployment workflow
-
-No proprietary GTA assets are included.
+## GitHub Pages
+Vite is configured with `base: '/ytg2/'` and the included workflow builds `dist/` before deploying it to GitHub Pages.
