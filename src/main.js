@@ -1,4 +1,4 @@
-import './styles.css';
+import '../styles.css';
 import { InputManager } from './input/InputManager.js';
 import { Game } from './game/Game.js';
 
