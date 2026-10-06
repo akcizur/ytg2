@@ -156,6 +156,15 @@ export class Game {
     }));
   }
 
+  disposeObject3D(object) {
+    object.traverse((node) => {
+      if (!node.isMesh) return;
+      node.geometry?.dispose?.();
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      for (const material of materials) material?.dispose?.();
+    });
+  }
+
   cloneFreeModel(key) {
     const source = this.freeModels[key];
     if (!source) return null;
@@ -239,6 +248,7 @@ export class Game {
       if (!model) return;
       this.styleFreeModel(model, 'building');
       this.fitFreeModel(model, size.w, size.h, size.d, 0);
+      this.disposeObject3D(building);
       building.clear();
       building.add(model);
     });
@@ -248,6 +258,7 @@ export class Game {
       if (!model) return;
       this.styleFreeModel(model, 'nature');
       model.scale.setScalar(.82 + (index % 4) * .08);
+      this.disposeObject3D(tree);
       tree.clear();
       tree.add(model);
     });
@@ -260,6 +271,7 @@ export class Game {
       const center = box.getCenter(new THREE.Vector3());
       model.position.sub(center);
       model.position.y += 9;
+      this.disposeObject3D(light.group);
       light.group.clear();
       light.group.add(model, light.point);
     });
@@ -271,6 +283,7 @@ export class Game {
       this.styleFreeModel(model, car.police ? 'police' : 'vehicle');
       this.fitFreeModel(model, 4.5, 2.8, 8.8, 0);
       const gameplayLights = car.headlights.flatMap((light) => [light, light.target]);
+      this.disposeObject3D(car.group);
       car.group.clear();
       car.group.add(model, ...gameplayLights);
 
