@@ -166,26 +166,78 @@ export class Game {
   }
 
   createBuilding(x, z, w, d, h) {
+    const tone = 0.20 + this.rng() * 0.28;
     const material = new THREE.MeshStandardMaterial({
-      color: grayscale(0.22 + this.rng() * 0.26),
-      roughness: 0.94, flatShading: true
+      color: grayscale(tone), roughness: 0.94, flatShading: true
     });
     const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
     building.position.set(x, h / 2, z);
     building.castShadow = true; building.receiveShadow = true; this.scene.add(building);
 
     this.world.buildings.push(building);
-    this.world.colliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
+    this.world.colliders.push({
+      minX: x - w / 2, maxX: x + w / 2,
+      minZ: z - d / 2, maxZ: z + d / 2
+    });
 
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 4, 2, d + 4), this.materials.roof);
-    roof.position.set(x, h + 1, z); roof.castShadow = true; roof.receiveShadow = true; this.scene.add(roof);
+    const trim = new THREE.MeshStandardMaterial({
+      color: grayscale(Math.min(.72, tone + .16)), roughness: 0.9, flatShading: true
+    });
+    const dark = new THREE.MeshStandardMaterial({
+      color: grayscale(Math.max(.06, tone - .15)), roughness: 0.72, metalness: .05, flatShading: true
+    });
+
+    // Low-poly facade ribs give the box mass a stylized architectural silhouette.
+    const ribCountX = Math.max(2, Math.floor(w / 42));
+    for (let i = 0; i < ribCountX; i += 1) {
+      const px = x - w / 2 + (i + .5) * (w / ribCountX);
+      const rib = new THREE.Mesh(new THREE.BoxGeometry(Math.max(2, w / ribCountX * .18), h * .84, 1.5), trim);
+      rib.position.set(px, h * .45, z + d / 2 + .8);
+      rib.castShadow = true;
+      this.scene.add(rib);
+    }
+
+    const ribCountZ = Math.max(2, Math.floor(d / 42));
+    for (let i = 0; i < ribCountZ; i += 1) {
+      const pz = z - d / 2 + (i + .5) * (d / ribCountZ);
+      const rib = new THREE.Mesh(new THREE.BoxGeometry(1.5, h * .72, Math.max(2, d / ribCountZ * .18)), trim);
+      rib.position.set(x + w / 2 + .8, h * .39, pz);
+      rib.castShadow = true;
+      this.scene.add(rib);
+    }
+
+    // Sparse dark window bands: intentionally graphic rather than realistic.
+    const bandCount = Math.max(2, Math.min(6, Math.floor(h / 30)));
+    for (let row = 0; row < bandCount; row += 1) {
+      const y = 16 + row * ((h - 28) / Math.max(1, bandCount - 1));
+      const front = new THREE.Mesh(new THREE.BoxGeometry(w * .64, 4.2, .18), dark);
+      front.position.set(x, y, z + d / 2 + 1.1);
+      this.scene.add(front);
+
+      const side = new THREE.Mesh(new THREE.BoxGeometry(.18, 4.2, d * .54), dark);
+      side.position.set(x + w / 2 + 1.1, y, z);
+      this.scene.add(side);
+    }
+
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 6, 2.6, d + 6), this.materials.roof);
+    roof.position.set(x, h + 1.3, z);
+    roof.castShadow = true; roof.receiveShadow = true; this.scene.add(roof);
+
+    const roofPod = new THREE.Mesh(
+      new THREE.BoxGeometry(w * (.28 + this.rng() * .16), 5 + this.rng() * 4, d * (.28 + this.rng() * .16)),
+      trim
+    );
+    roofPod.position.set(x + (this.rng() - .5) * 12, h + 4, z + (this.rng() - .5) * 12);
+    roofPod.castShadow = true; this.scene.add(roofPod);
 
     if (h > 70) {
       const cap = new THREE.Mesh(
-        new THREE.CylinderGeometry(Math.min(w, d) * 0.18, Math.min(w, d) * 0.24, 8, 6),
-        new THREE.MeshStandardMaterial({ color: 0x5b5b5b, roughness: 1, flatShading: true })
+        new THREE.CylinderGeometry(Math.min(w, d) * .18, Math.min(w, d) * .24, 8, 6),
+        dark
       );
-      cap.position.set(x, h + 7, z); cap.castShadow = true; this.scene.add(cap);
+      cap.position.set(x, h + 9, z);
+      cap.castShadow = true;
+      this.scene.add(cap);
     }
   }
 
