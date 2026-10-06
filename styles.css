@@ -246,3 +246,79 @@ button.secondary,.icon-button{background:transparent;color:#ededed}button:hover{
   .launcher-console .console-row{grid-template-columns:52px 1fr}
   .launcher-meta{gap:10px;font-size:7px}
 }
+
+
+/* ---------- STYLIZED URBAN HEAT THEME ---------- */
+:root{
+  --style-bg:#0d1018;
+  --style-panel:#151922;
+  --style-line:rgba(255,255,255,.14);
+  --style-hot:#ffc857;
+  --style-red:#d65b55;
+  --style-cyan:#3aa6a8;
+  --style-text:#f3efe7;
+}
+body{background:var(--style-bg)}
+#game{background:#0d1018}
+.launcher{
+  background:
+    radial-gradient(52% 48% at 72% 55%,rgba(255,200,87,.13),transparent 58%),
+    radial-gradient(42% 44% at 12% 28%,rgba(58,166,168,.10),transparent 60%),
+    linear-gradient(135deg,#0a0d14 0%,#111622 58%,#19151a 100%);
+}
+.launcher-shell{
+  border-color:rgba(255,255,255,.16);
+  background:
+    linear-gradient(180deg,rgba(19,24,34,.44),rgba(10,13,19,.82)),
+    repeating-linear-gradient(135deg,transparent 0 18px,rgba(255,255,255,.012) 18px 19px);
+}
+.launcher-brandline .brand-mark{
+  background:var(--style-hot);
+  border-color:var(--style-hot);
+  color:#111;
+  box-shadow:0 0 28px rgba(255,200,87,.16);
+}
+.launcher-brandline b{color:var(--style-hot)}
+.launcher-brandline em{
+  color:#111;
+  background:var(--style-hot);
+  border-color:var(--style-hot);
+}
+.launcher-copy h1 span{color:#aeb7c7}
+.launcher-copy h1 strong{color:var(--style-text);text-shadow:10px 12px 0 rgba(214,91,85,.10)}
+.launcher .lead{color:#9aa4b5}
+.launcher-cta .primary{
+  background:var(--style-hot);
+  border-color:var(--style-hot);
+  box-shadow:0 10px 34px rgba(255,200,87,.12);
+}
+.launcher-cta .secondary{border-color:var(--style-line)}
+.console-row strong{color:#e7ebf0}
+.console-foot b{color:var(--style-hot)}
+.launcher-bottomline span:first-child{color:var(--style-hot)}
+.launcher-skyline i:nth-child(2n){border-color:rgba(58,166,168,.18)}
+.launcher-skyline i:nth-child(3n){border-color:rgba(214,91,85,.18)}
+
+.hud-brand{border-bottom-color:var(--style-hot)}
+.hud-money{color:var(--style-hot)}
+.hud-stat b{background:var(--style-hot)}
+.hud-stat b#stamina{background:var(--style-cyan)}
+.hud-mission{border-left-color:var(--style-hot)}
+.hud-mission .mission-head span{color:var(--style-hot)}
+.hud-wanted{color:#ff8d7d}
+.minimap-card{
+  border-color:rgba(255,200,87,.24);
+  background:rgba(9,12,18,.62);
+  box-shadow:0 12px 42px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.03);
+}
+.hud-prompts span{border-left-color:rgba(255,200,87,.32)}
+.touch-stick__knob{border-color:rgba(255,200,87,.36)}
+.touch-actions button.active{background:var(--style-hot);color:#131313}
+.modal{
+  background:linear-gradient(180deg,#151a23,#0d1017);
+  border-color:rgba(255,200,87,.18);
+}
+.binding-row.waiting{
+  border-color:var(--style-hot);
+  box-shadow:0 0 0 1px rgba(255,200,87,.18) inset;
+}
