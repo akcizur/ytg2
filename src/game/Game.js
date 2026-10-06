@@ -54,6 +54,9 @@ export class Game {
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
 
+    this.style = this.createLowPolyStyle();
+    this.applyLowPolyRenderer();
+
     this.rng = makeRng(20261006);
     this.state = {
       started: false, paused: true, pauseReason: 'launcher', dead: false,
@@ -72,7 +75,6 @@ export class Game {
     this.createJobs();
     this.createRain();
     this.placeActors();
-    this.applyStylizedTheme();
     this.bindEvents();
     this.loadSave();
 
@@ -83,115 +85,163 @@ export class Game {
     this.frameId = requestAnimationFrame(this.boundLoop);
   }
 
-  createMaterials() {
+  createMaterials({
+    const p = this.style.palette;
     return {
-      asphalt: new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.92, flatShading: true }),
-      road: new THREE.MeshStandardMaterial({ color: 0x232323, roughness: 0.98, flatShading: true }),
-      roof: new THREE.MeshStandardMaterial({ color: 0x4b4b4b, roughness: 0.98, flatShading: true }),
-      grass: new THREE.MeshStandardMaterial({ color: 0x4e4e4e, roughness: 1, flatShading: true }),
-      lane: new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 1, flatShading: true })
+      asphalt: this.lowPolyMaterial(p.asphalt, 'ground', { roughness: .96 }),
+      road: this.lowPolyMaterial(p.road, 'road', { roughness: .98 }),
+      roof: this.lowPolyMaterial(p.roof, 'roof', { roughness: .9 }),
+      grass: this.lowPolyMaterial(p.grass, 'grass', { roughness: 1 }),
+      lane: this.lowPolyMaterial(p.lane, 'lane', { roughness: .82 }),
+      curb: this.lowPolyMaterial(p.curb, 'curb', { roughness: .9 }),
+      accent: this.lowPolyMaterial(p.accent, 'accent', { roughness: .46, emissive: p.accentGlow, emissiveIntensity: .35 })
     };
   }
-
-  createLighting() {
-    this.ambient = new THREE.HemisphereLight(0xffffff, 0x141414, 1.55);
+  createLighting({
+    this.ambient = new THREE.HemisphereLight(0xb9c2d3, 0x11151d, 1.35);
     this.scene.add(this.ambient);
 
-    this.sun = new THREE.DirectionalLight(0xffffff, 3.4);
+    this.sun = new THREE.DirectionalLight(0xffd8aa, 2.9);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
-    this.sun.shadow.camera.near = 1; this.sun.shadow.camera.far = 1500;
-    this.sun.shadow.camera.left = -600; this.sun.shadow.camera.right = 600;
-    this.sun.shadow.camera.top = 600; this.sun.shadow.camera.bottom = -600;
+    this.sun.shadow.camera.near = 1;
+    this.sun.shadow.camera.far = 1500;
+    this.sun.shadow.camera.left = -600;
+    this.sun.shadow.camera.right = 600;
+    this.sun.shadow.camera.top = 600;
+    this.sun.shadow.camera.bottom = -600;
     this.scene.add(this.sun, this.sun.target);
 
-    this.moon = new THREE.DirectionalLight(0xbababa, 0.28);
+    this.moon = new THREE.DirectionalLight(0x7182d9, .42);
     this.scene.add(this.moon, this.moon.target);
   }
-
-  applyStylizedTheme() {
-    const palette = {
-      ink: 0x0d1018,
-      asphalt: 0x2a2f3a,
-      road: 0x161a22,
-      roof: 0x3a414e,
-      trim: 0x596170,
-      window: 0xffc857,
-      lane: 0xd8b56a,
-      grass: 0x30453b,
-      carA: 0xd65b55,
-      carB: 0x3aa6a8,
-      carC: 0xd6a84f,
-      police: 0x252a38,
-      civilian: 0x8b748e,
-      gang: 0x8f4146,
-      head: 0xc2a88b
+  createLowPolyStyle() {
+    return {
+      rules: {
+        flatShading: true,
+        maxRadialSegments: 8,
+        wheelSegments: 8,
+        treeSegments: 6,
+        bevelRatio: .055,
+        buildingTiers: 2,
+        facadeDensity: .18,
+        roofDetailLimit: 2,
+        npcSegments: 6,
+        minFeature: 1.2
+      },
+      palette: {
+        ink: 0x0d1018,
+        asphalt: 0x2a2f3a,
+        road: 0x171b23,
+        roof: 0x3b4350,
+        curb: 0x667080,
+        lane: 0xd7b665,
+        grass: 0x30473d,
+        buildingA: 0x3e4653,
+        buildingB: 0x4a5260,
+        buildingC: 0x343b47,
+        trim: 0x626c7b,
+        window: 0xffc857,
+        accent: 0xffc857,
+        accentGlow: 0xff9f2d,
+        cyan: 0x38a7a7,
+        red: 0xd65b55,
+        carGold: 0xd6a84f,
+        police: 0x27304a,
+        glass: 0x101720,
+        tire: 0x090b10,
+        skin: 0xc2a88b,
+        civilian: 0x7e8797,
+        gang: 0x8e4149
+      }
     };
+  }
 
-    this.scene.background = new THREE.Color(palette.ink);
+  applyLowPolyRenderer() {
+    this.scene.background = new THREE.Color(this.style.palette.ink);
     this.scene.fog.color.setHex(0x141923);
+    this.bloom.strength = .42;
+    this.bloom.radius = .72;
+    this.bloom.threshold = .76;
+  }
 
-    this.materials.asphalt.color.setHex(palette.asphalt);
-    this.materials.road.color.setHex(palette.road);
-    this.materials.roof.color.setHex(palette.roof);
-    this.materials.grass.color.setHex(palette.grass);
-    this.materials.lane.color.setHex(palette.lane);
-
-    this.ambient.color.setHex(0xb9c2d3);
-    this.ambient.groundColor.setHex(0x10141b);
-    this.sun.color.setHex(0xffd8aa);
-    this.moon.color.setHex(0x6f7ed8);
-
-    const carColors = [palette.carA, palette.carB, palette.carC];
-    let carIndex = 0;
-
-    this.scene.traverse((node) => {
-      if (!node.isMesh || !node.material) return;
-      const materials = Array.isArray(node.material) ? node.material : [node.material];
-
-      for (const material of materials) {
-        const role = material.userData?.role;
-        if (role === 'building') material.color.setHex(0x454b58);
-        else if (role === 'trim') material.color.setHex(palette.trim);
-        else if (role === 'window') {
-          material.color.setHex(palette.window);
-          material.emissive.setHex(0xa96f18);
-          material.emissiveIntensity = 0.8;
-          material.roughness = 0.48;
-        } else if (role === 'roof') material.color.setHex(palette.roof);
-        else if (role === 'carBody') material.color.setHex(carColors[(carIndex++) % carColors.length]);
-        else if (role === 'policeBody') material.color.setHex(palette.police);
-        else if (role === 'carGlass') material.color.setHex(0x111722);
-        else if (role === 'carTire') material.color.setHex(0x090b10);
-        else if (role === 'npcGang') material.color.setHex(palette.gang);
-        else if (role === 'npcCivilian') material.color.setHex(palette.civilian);
-        else if (role === 'npcHead') material.color.setHex(palette.head);
-      }
+  lowPolyMaterial(color, role = 'prop', options = {}) {
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      roughness: options.roughness ?? .88,
+      metalness: options.metalness ?? 0,
+      emissive: options.emissive ?? 0x000000,
+      emissiveIntensity: options.emissiveIntensity ?? 0,
+      flatShading: this.style.rules.flatShading
     });
+    material.userData.role = role;
+    return material;
+  }
 
-    for (const light of this.world.lights) {
-      light.point.color.setHex(0xffb95c);
-      light.point.intensity *= 1.08;
-      light.head.material.color.setHex(0xffd37a);
-      light.head.material.emissive.setHex(0xff8a2e);
-    }
+  chamferPrism(width, depth, height, bevel = null) {
+    const b = clamp(bevel ?? Math.min(width, depth) * this.style.rules.bevelRatio, Math.min(width, depth) * .22);
+    const w = width / 2;
+    const d = depth / 2;
+    const shape = new THREE.Shape();
+    shape.moveTo(-w + b, -d);
+    shape.lineTo(w - b, -d);
+    shape.lineTo(w, -d + b);
+    shape.lineTo(w, d - b);
+    shape.lineTo(w - b, d);
+    shape.lineTo(-w + b, d);
+    shape.lineTo(-w, d - b);
+    shape.lineTo(-w, -d + b);
+    shape.closePath();
 
-    for (const car of this.world.cars) {
-      if (!car.police) continue;
-      for (const light of car.headlights) light.color.setHex(0xffd6a0);
-    }
-
-    const markerColors = [0xffc857, 0x3aa6a8, 0xd65b55, 0xd6a84f];
-    this.world.jobs.forEach((job, index) => {
-      for (const child of job.group.children) {
-        if (!child.material?.color) continue;
-        child.material.color.setHex(markerColors[index % markerColors.length]);
-      }
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: height,
+      bevelEnabled: false,
+      curveSegments: 1,
+      steps: 1
     });
+    geometry.rotateX(-Math.PI / 2);
+    geometry.translate(0, height / 2, 0);
+    geometry.computeVertexNormals();
+    return geometry;
+  }
 
-    this.bloom.strength = 0.46;
-    this.bloom.radius = 0.74;
-    this.bloom.threshold = 0.72;
+  sideProfilePrism(length, width, height, profile = [0, .7, 1, .72, 0]) {
+    const half = length / 2;
+    const y0 = 0;
+    const shape = new THREE.Shape();
+    shape.moveTo(-half, y0);
+    shape.lineTo(-half * .78, height * profile[1]);
+    shape.lineTo(-half * .28, height * profile[2]);
+    shape.lineTo(half * .46, height * profile[3]);
+    shape.lineTo(half, y0);
+    shape.closePath();
+
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: width,
+      bevelEnabled: false,
+      curveSegments: 1,
+      steps: 1
+    });
+    geometry.translate(0, 0, -width / 2);
+    geometry.rotateY(Math.PI / 2);
+    geometry.translate(0, 0, 0);
+    geometry.computeVertexNormals();
+    return geometry;
+  }
+
+  addLowPolyMesh(root, geometry, material, position = null, scale = null) {
+    const mesh = new THREE.Mesh(geometry, material);
+    if (position) mesh.position.copy(position);
+    if (scale) mesh.scale.copy(scale);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    root.add(mesh);
+    return mesh;
+  }
+
+  facetedIco(radius, detail = 1, material) {
+    const safeDetail = Math.min(detail, 1);
+    return new THREE.Mesh(new THREE.IcosahedronGeometry(radius, safeDetail), material);
   }
 
   createCity() {
@@ -252,220 +302,301 @@ export class Game {
   }
 
   createBuilding(x, z, w, d, h) {
-    const tone = 0.20 + this.rng() * 0.28;
-    const material = new THREE.MeshStandardMaterial({
-      color: grayscale(tone), roughness: 0.94, flatShading: true
-    });
-    material.userData.role = 'building';
-    const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-    building.userData.role = 'building';
-    building.position.set(x, h / 2, z);
-    building.castShadow = true; building.receiveShadow = true; this.scene.add(building);
+    const p = this.style.palette;
+    const r = this.rng;
+    const variant = r();
+    const bodyColor = variant < .34 ? p.buildingA : variant < .67 ? p.buildingB : p.buildingC;
+    const root = new THREE.Group();
+    root.position.set(x, 0, z);
 
-    this.world.buildings.push(building);
+    const bevel = Math.min(w, d) * this.style.rules.bevelRatio;
+    const baseH = h * (.66 + r() * .16);
+    const body = this.addLowPolyMesh(
+      root,
+      this.chamferPrism(w, d, baseH, bevel),
+      this.lowPolyMaterial(bodyColor, 'building', { roughness: .94 }),
+      new THREE.Vector3(0, 0, 0)
+    );
+
+    this.world.buildings.push(root);
     this.world.colliders.push({
       minX: x - w / 2, maxX: x + w / 2,
       minZ: z - d / 2, maxZ: z + d / 2
     });
 
-    const trim = new THREE.MeshStandardMaterial({
-      color: grayscale(Math.min(.72, tone + .16)), roughness: 0.9, flatShading: true
-    });
-    trim.userData.role = 'trim';
-    const dark = new THREE.MeshStandardMaterial({
-      color: grayscale(Math.max(.06, tone - .15)), roughness: 0.72, metalness: .05, flatShading: true
-    });
-    dark.userData.role = 'window';
+    const tierCount = h > 96 ? 2 : h > 58 ? 1 : 0;
+    let currentW = w;
+    let currentD = d;
+    let currentY = baseH;
 
-    // Low-poly facade ribs give the box mass a stylized architectural silhouette.
-    const ribCountX = Math.max(2, Math.floor(w / 42));
-    for (let i = 0; i < ribCountX; i += 1) {
-      const px = x - w / 2 + (i + .5) * (w / ribCountX);
-      const rib = new THREE.Mesh(new THREE.BoxGeometry(Math.max(2, w / ribCountX * .18), h * .84, 1.5), trim);
-      rib.position.set(px, h * .45, z + d / 2 + .8);
-      rib.castShadow = true;
-      this.scene.add(rib);
-    }
-
-    const ribCountZ = Math.max(2, Math.floor(d / 42));
-    for (let i = 0; i < ribCountZ; i += 1) {
-      const pz = z - d / 2 + (i + .5) * (d / ribCountZ);
-      const rib = new THREE.Mesh(new THREE.BoxGeometry(1.5, h * .72, Math.max(2, d / ribCountZ * .18)), trim);
-      rib.position.set(x + w / 2 + .8, h * .39, pz);
-      rib.castShadow = true;
-      this.scene.add(rib);
-    }
-
-    // Sparse dark window bands: intentionally graphic rather than realistic.
-    const bandCount = Math.max(2, Math.min(6, Math.floor(h / 30)));
-    for (let row = 0; row < bandCount; row += 1) {
-      const y = 16 + row * ((h - 28) / Math.max(1, bandCount - 1));
-      const front = new THREE.Mesh(new THREE.BoxGeometry(w * .64, 4.2, .18), dark);
-      front.position.set(x, y, z + d / 2 + 1.1);
-      this.scene.add(front);
-
-      const side = new THREE.Mesh(new THREE.BoxGeometry(.18, 4.2, d * .54), dark);
-      side.position.set(x + w / 2 + 1.1, y, z);
-      this.scene.add(side);
-    }
-
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 6, 2.6, d + 6), this.materials.roof);
-    roof.userData.role = 'roof';
-    roof.position.set(x, h + 1.3, z);
-    roof.castShadow = true; roof.receiveShadow = true; this.scene.add(roof);
-
-    const roofPod = new THREE.Mesh(
-      new THREE.BoxGeometry(w * (.28 + this.rng() * .16), 5 + this.rng() * 4, d * (.28 + this.rng() * .16)),
-      trim
-    );
-    roofPod.position.set(x + (this.rng() - .5) * 12, h + 4, z + (this.rng() - .5) * 12);
-    roofPod.castShadow = true; this.scene.add(roofPod);
-
-    if (h > 70) {
-      const cap = new THREE.Mesh(
-        new THREE.CylinderGeometry(Math.min(w, d) * .18, Math.min(w, d) * .24, 8, 6),
-        dark
+    for (let tier = 0; tier < tierCount; tier += 1) {
+      const shrink = .74 + r() * .08;
+      currentW *= shrink;
+      currentD *= shrink;
+      const tierH = Math.max(9, (h - currentY) * (tier === 0 ? .58 : .66));
+      const tierMesh = this.addLowPolyMesh(
+        root,
+        this.chamferPrism(currentW, currentD, tierH, Math.min(currentW, currentD) * .05),
+        this.lowPolyMaterial(tier % 2 ? p.buildingC : p.buildingB, 'buildingTier', { roughness: .92 }),
+        new THREE.Vector3((r() - .5) * 5, currentY, (r() - .5) * 5)
       );
-      cap.position.set(x, h + 9, z);
-      cap.castShadow = true;
-      this.scene.add(cap);
+      currentY += tierH;
+      tierMesh.rotation.y = (r() > .5 ? 1 : -1) * Math.PI / 2 * .5;
     }
-  }
 
+    const trim = this.lowPolyMaterial(p.trim, 'trim', { roughness: .84, metalness: .06 });
+    const window = this.lowPolyMaterial(p.window, 'window', {
+      roughness: .36, emissive: p.accentGlow, emissiveIntensity: .72
+    });
+
+    const stripeCount = Math.max(2, Math.min(5, Math.floor(h / 27)));
+    for (let i = 0; i < stripeCount; i += 1) {
+      const y = 10 + (baseH - 18) * (i / Math.max(1, stripeCount - 1));
+      const panelW = Math.max(2.2, w * this.style.rules.facadeDensity);
+      const panel = this.addLowPolyMesh(
+        root,
+        this.chamferPrism(panelW, 1.15, 4.5, .45),
+        i % 2 ? window : trim,
+        new THREE.Vector3(-w * .18 + (i % 3) * w * .18, y, d / 2 + .7)
+      );
+      panel.rotation.y = 0;
+    }
+
+    for (let i = 0; i < 2; i += 1) {
+      const vertical = this.addLowPolyMesh(
+        root,
+        this.chamferPrism(1.2, d * .72, Math.max(8, baseH * .66), .24),
+        trim,
+        new THREE.Vector3(w / 2 + .65, 4 + baseH * .33, (i ? .26 : -.26) * d)
+      );
+      vertical.rotation.y = Math.PI / 2;
+    }
+
+    const roof = this.addLowPolyMesh(
+      root,
+      this.chamferPrism(currentW + 7, currentD + 7, 2.6, 1),
+      this.lowPolyMaterial(p.roof, 'roof', { roughness: .9 }),
+      new THREE.Vector3(0, currentY + 1.3, 0)
+    );
+
+    const podCount = h > 72 ? 2 : 1;
+    for (let i = 0; i < podCount && i < this.style.rules.roofDetailLimit; i += 1) {
+      const podW = currentW * (.18 + r() * .12);
+      const podD = currentD * (.18 + r() * .12);
+      const pod = this.addLowPolyMesh(
+        root,
+        this.chamferPrism(podW, podD, 5 + r() * 4, 1),
+        i ? trim : this.lowPolyMaterial(p.roof, 'roofPod', { roughness: .9 }),
+        new THREE.Vector3((r() - .5) * currentW * .22, currentY + 5, (r() - .5) * currentD * .22)
+      );
+      pod.rotation.y = (r() - .5) * .45;
+    }
+
+    root.traverse((node) => {
+      if (node.isMesh) {
+        node.castShadow = true;
+        node.receiveShadow = true;
+        if (node.material) node.material.flatShading = true;
+      }
+    });
+    this.scene.add(root);
+  }
   createPark(x, z) {
-    const base = new THREE.Mesh(new THREE.BoxGeometry(226, 0.16, 226), this.materials.grass);
-    base.position.set(x, 0.08, z); base.receiveShadow = true; this.scene.add(base);
+    const p = this.style.palette;
+    const base = this.addLowPolyMesh(
+      this.scene,
+      this.chamferPrism(226, 226, .18, 5),
+      this.lowPolyMaterial(p.grass, 'park', { roughness: 1 }),
+      new THREE.Vector3(x, .09, z)
+    );
+    base.receiveShadow = true;
 
     for (let i = 0; i < 13; i += 1) {
       const tree = new THREE.Group();
       const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.8, 1, 9, 6),
-        new THREE.MeshStandardMaterial({ color: 0x383838, roughness: 1, flatShading: true })
+        new THREE.CylinderGeometry(.8, 1.05, 9, this.style.rules.treeSegments, 1, true),
+        this.lowPolyMaterial(p.trim, 'treeTrunk', { roughness: 1 })
       );
       trunk.position.y = 4.5;
-      const crown = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(6 + this.rng() * 3, 1),
-        new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 1, flatShading: true })
-      );
-      crown.position.y = 10;
+
+      const crown = this.facetedIco(6 + this.rng() * 3, 1, this.lowPolyMaterial(
+        i % 3 === 0 ? p.cyan : p.grass, 'treeCrown', { roughness: 1 }
+      ));
+      crown.scale.y = .85 + this.rng() * .3;
+      crown.position.y = 10 + this.rng() * 2;
+
       tree.add(trunk, crown);
-      tree.position.set(x + (this.rng() - 0.5) * 190, 0, z + (this.rng() - 0.5) * 190);
-      tree.traverse((node) => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
+      tree.position.set(x + (this.rng() - .5) * 190, 0, z + (this.rng() - .5) * 190);
+      tree.rotation.y = this.rng() * Math.PI * 2;
+      tree.traverse((node) => {
+        if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; }
+      });
       this.scene.add(tree);
     }
   }
-
   createStreetLight(x, z) {
+    const p = this.style.palette;
     const group = new THREE.Group();
+
     const pole = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.55, 0.72, 18, 8),
-      new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.55, metalness: 0.45, flatShading: true })
+      new THREE.CylinderGeometry(.5, .72, 18, 6, 1),
+      this.lowPolyMaterial(0x29303a, 'streetPole', { roughness: .62, metalness: .28 })
     );
     pole.position.y = 9;
 
-    const head = new THREE.Mesh(
-      new THREE.BoxGeometry(2.8, 1.1, 2.3),
-      new THREE.MeshStandardMaterial({
-        color: 0x1a1a1a, roughness: 0.5, metalness: 0.25,
-        emissive: 0xffffff, emissiveIntensity: 0.15, flatShading: true
-      })
+    const head = this.addLowPolyMesh(
+      group,
+      this.chamferPrism(2.8, 2.2, 1.1, .32),
+      this.lowPolyMaterial(0x1b2028, 'streetHead', {
+        roughness: .48, metalness: .18, emissive: p.accentGlow, emissiveIntensity: .12
+      }),
+      new THREE.Vector3(0, 18, 0)
     );
-    head.position.y = 18;
+    head.rotation.y = Math.PI / 4;
 
-    const point = new THREE.PointLight(0xffffff, 5.2, 108, 2);
+    const point = new THREE.PointLight(0xffb95c, 5.2, 108, 2);
     point.position.y = 16;
 
-    group.add(pole, head, point);
+    group.add(pole, point);
     group.position.set(x, 0, z);
     this.scene.add(group);
     this.world.lights.push({ point, head });
   }
-
   createPuddle(x, z, size) {
     const puddle = new THREE.Mesh(
-      new THREE.CircleGeometry(size, 24),
+      new THREE.CircleGeometry(size, 12),
       new THREE.MeshPhysicalMaterial({
-        color: 0x6d6d6d, roughness: 0.12, metalness: 0.72, transparent: true, opacity: 0.18
+        color: 0x405064,
+        roughness: .12,
+        metalness: .78,
+        transparent: true,
+        opacity: .18,
+        flatShading: true
       })
     );
     puddle.rotation.x = -Math.PI / 2;
-    puddle.position.set(x, 0.15, z);
+    puddle.rotation.z = (this.rng() - .5) * .35;
+    puddle.position.set(x, .15, z);
+    puddle.scale.set(1, .58 + this.rng() * .25, 1);
     this.scene.add(puddle);
     this.world.puddles.push(puddle);
   }
-
   createPlayer() {
+    const p = this.style.palette;
     this.playerGroup = new THREE.Group();
 
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.62, 1.6, 5, 8),
-      new THREE.MeshStandardMaterial({ color: 0xd8d8d8, roughness: 0.85, flatShading: true })
+    const torso = new THREE.Mesh(
+      new THREE.CylinderGeometry(.62, .72, 1.65, this.style.rules.npcSegments, 1, false),
+      this.lowPolyMaterial(0xc7d0d6, 'playerBody', { roughness: .86 })
     );
-    body.position.y = 1.25;
+    torso.position.y = 1.25;
 
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.48, 10, 8),
-      new THREE.MeshStandardMaterial({ color: 0x929292, roughness: 0.9, flatShading: true })
+    const head = this.facetedIco(
+      .48,
+      1,
+      this.lowPolyMaterial(p.skin, 'playerHead', { roughness: .9 })
     );
-    head.position.y = 2.72;
+    head.position.y = 2.62;
 
-    this.playerGroup.add(body, head);
+    const pack = this.addLowPolyMesh(
+      this.playerGroup,
+      this.chamferPrism(.72, .38, 1.15, .16),
+      this.lowPolyMaterial(0x33483d, 'playerPack', { roughness: 1 }),
+      new THREE.Vector3(0, 1.22, -.42)
+    );
+
+    this.playerGroup.add(torso, head, pack);
+    this.playerGroup.rotation.order = 'YXZ';
     this.playerGroup.traverse((node) => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
     this.scene.add(this.playerGroup);
     this.playerGroup.position.set(this.player.x, 0, this.player.z);
   }
-
   createCar({ police = false, color = 0.4 } = {}) {
+    const p = this.style.palette;
     const group = new THREE.Group();
-    const tone = police ? 0.72 : 0.25 + color * 0.38;
-    const bodyMaterial = new THREE.MeshStandardMaterial({ color: grayscale(tone), roughness: 0.38, metalness: 0.25, flatShading: true });
-    bodyMaterial.userData.role = police ? 'policeBody' : 'carBody';
-    const glassMaterial = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.25, metalness: 0.05, flatShading: true });
-    glassMaterial.userData.role = 'carGlass';
-    const tireMaterial = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 1, flatShading: true });
-    tireMaterial.userData.role = 'carTire';
+    const tint = police ? p.police : [p.red, p.cyan, p.carGold][Math.floor(clamp(color, 0, .999) * 3)];
+    const bodyMaterial = this.lowPolyMaterial(tint, police ? 'policeBody' : 'carBody', {
+      roughness: .42, metalness: .16
+    });
+    const glassMaterial = this.lowPolyMaterial(p.glass, 'carGlass', { roughness: .23, metalness: .08 });
+    const tireMaterial = this.lowPolyMaterial(p.tire, 'carTire', { roughness: .98 });
 
-    const body = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.15, 8.6), bodyMaterial); body.position.y = 1.05; body.userData.role = police ? 'policeBody' : 'carBody';
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(3.35, 1.0, 4.15), glassMaterial); cabin.position.set(0, 1.8, -0.15); cabin.userData.role = 'carGlass';
-    group.add(body, cabin);
+    const body = this.addLowPolyMesh(
+      group,
+      this.chamferPrism(4.5, 8.8, 1.12, .42),
+      bodyMaterial,
+      new THREE.Vector3(0, 1.0, 0)
+    );
 
-    for (const x of [-1.9, 1.9]) {
-      for (const z of [-2.9, 2.9]) {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.48, 12), tireMaterial);
-        wheel.rotation.z = Math.PI / 2; wheel.position.set(x, 0.76, z); wheel.userData.role = 'carTire'; group.add(wheel);
+    const cabin = this.addLowPolyMesh(
+      group,
+      this.sideProfilePrism(4.7, 3.2, 1.15),
+      glassMaterial,
+      new THREE.Vector3(0, 1.7, -.35)
+    );
+    cabin.rotation.y = Math.PI / 2;
+
+    const roofAccent = this.addLowPolyMesh(
+      group,
+      this.chamferPrism(2.8, 3.1, .16, .12),
+      police ? this.lowPolyMaterial(p.red, 'policeAccent', { roughness: .4, emissive: p.red, emissiveIntensity: .35 }) : this.lowPolyMaterial(p.trim, 'carTrim', { roughness: .7 }),
+      new THREE.Vector3(0, 2.32, -.35)
+    );
+
+    for (const x of [-2.0, 2.0]) {
+      for (const z of [-2.95, 2.95]) {
+        const wheel = new THREE.Mesh(
+          new THREE.CylinderGeometry(.78, .78, .48, this.style.rules.wheelSegments, 1),
+          tireMaterial
+        );
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, .7, z);
+        wheel.castShadow = true;
+        wheel.receiveShadow = true;
+        group.add(wheel);
       }
     }
 
-    const headlightMaterial = new THREE.MeshStandardMaterial({
-      color: 0xdcdcdc, emissive: 0xffffff, emissiveIntensity: 1.0, flatShading: true
+    const headlightMaterial = this.lowPolyMaterial(p.window, 'headlight', {
+      roughness: .28, emissive: p.accentGlow, emissiveIntensity: 1.15
     });
-    for (const x of [-1.15, 1.15]) {
-      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.38, 0.2), headlightMaterial);
-      lamp.position.set(x, 1.3, 4.36); group.add(lamp);
+    for (const x of [-1.18, 1.18]) {
+      const lamp = this.addLowPolyMesh(
+        group,
+        this.chamferPrism(.68, .24, .34, .08),
+        headlightMaterial,
+        new THREE.Vector3(x, 1.25, 4.34)
+      );
     }
 
     if (police) {
-      const bar = new THREE.Mesh(
-        new THREE.BoxGeometry(2.2, 0.22, 0.72),
-        new THREE.MeshStandardMaterial({ color: 0x8a8a8a, emissive: 0xffffff, emissiveIntensity: 2.6, flatShading: true })
+      const bar = this.addLowPolyMesh(
+        group,
+        this.chamferPrism(2.4, .74, .22, .09),
+        this.lowPolyMaterial(p.cyan, 'policeBar', { roughness: .3, emissive: p.cyan, emissiveIntensity: 2.1 }),
+        new THREE.Vector3(0, 2.48, -.3)
       );
-      bar.position.y = 2.45; group.add(bar);
+      bar.material.emissiveIntensity = 2.1;
     }
 
-    const leftHeadlight = new THREE.SpotLight(0xffffff, 6.5, 115, Math.PI / 7, 0.44, 1.4);
+    const leftHeadlight = new THREE.SpotLight(0xffd6a0, 6.5, 115, Math.PI / 7, .44, 1.4);
     const rightHeadlight = leftHeadlight.clone();
     leftHeadlight.position.set(-1.15, 1.55, 4.0);
     rightHeadlight.position.set(1.15, 1.55, 4.0);
     leftHeadlight.target.position.set(-1.15, 0, 28);
     rightHeadlight.target.position.set(1.15, 0, 28);
     group.add(leftHeadlight, leftHeadlight.target, rightHeadlight, rightHeadlight.target);
-    leftHeadlight.visible = false; rightHeadlight.visible = false;
+    leftHeadlight.visible = false;
+    rightHeadlight.visible = false;
 
-    group.traverse((node) => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
+    group.traverse((node) => {
+      if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; }
+    });
     this.scene.add(group);
 
     const car = {
-      group, x: 0, z: 0, yaw: 0, speed: 0, maxSpeed: police ? 12 : 8 + this.rng() * 4,
+      group, x: 0, z: 0, yaw: 0, speed: 0,
+      maxSpeed: police ? 12 : 8 + this.rng() * 4,
       health: 100, police, occupied: false, stolen: false, marked: false,
       headlights: [leftHeadlight, rightHeadlight], marker: null
     };
@@ -473,24 +604,35 @@ export class Game {
     this.world.cars.push(car);
     return car;
   }
-
   createNPC(kind = 'civilian') {
+    const p = this.style.palette;
     const group = new THREE.Group();
-    const bodyMaterial = new THREE.MeshStandardMaterial({ color: kind === 'gang' ? 0x4f4f4f : 0x575757, roughness: 0.95, flatShading: true });
-    bodyMaterial.userData.role = kind === 'gang' ? 'npcGang' : 'npcCivilian';
+    const bodyMaterial = this.lowPolyMaterial(
+      kind === 'gang' ? p.gang : p.civilian,
+      kind === 'gang' ? 'npcGang' : 'npcCivilian',
+      { roughness: .94 }
+    );
     const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.52, 1.45, 4, 7),
+      new THREE.CapsuleGeometry(.52, 1.15, 2, this.style.rules.npcSegments),
       bodyMaterial
     );
-    body.position.y = 1.15; body.userData.role = bodyMaterial.userData.role;
-    const headMaterial = new THREE.MeshStandardMaterial({ color: 0x898989, roughness: 1, flatShading: true });
-    headMaterial.userData.role = 'npcHead';
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.43, 9, 7),
-      headMaterial
+    body.position.y = 1.15;
+
+    const head = this.facetedIco(
+      .43, 1,
+      this.lowPolyMaterial(p.skin, 'npcHead', { roughness: .94 })
     );
-    head.position.y = 2.55;
-    group.add(body, head);
+    head.position.y = 2.48;
+
+    const shoulder = this.addLowPolyMesh(
+      group,
+      this.chamferPrism(1.18, .58, .36, .12),
+      this.lowPolyMaterial(kind === 'gang' ? p.red : p.cyan, 'npcAccent', { roughness: .9 }),
+      new THREE.Vector3(0, 1.58, 0)
+    );
+
+    group.add(body, head, shoulder);
+    group.rotation.order = 'YXZ';
     group.traverse((node) => { if (node.isMesh) { node.castShadow = true; node.receiveShadow = true; } });
     this.scene.add(group);
 
@@ -502,7 +644,6 @@ export class Game {
     this.world.npcs.push(npc);
     return npc;
   }
-
   createJobs() {
     this.jobs = [
       { x: -450, z: -450, label: 'SAFEHOUSE', tone: 0xffffff },
