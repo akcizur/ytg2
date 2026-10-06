@@ -10,12 +10,28 @@
 <body>
   <canvas id="game"></canvas>
 
-  <div id="boot" class="screen">
-    <div class="panel hero">
-      <div class="kicker">YTG2 // URBAN HEAT</div>
-      <h1>LIBERTY AFTER DARK</h1>
-      <p>Modern 3D top-down urban action. Dynamic lighting, PBR-style procedural materials, rain, traffic and police.</p>
-      <button id="start">ENTER CITY</button>
+  <div id="boot" class="screen launcher">
+    <div class="launcher-backdrop" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <div class="launcher-panel" role="dialog" aria-label="YTG2 launcher">
+      <div class="launcher-top">
+        <div>
+          <div class="kicker">YTG2 // URBAN HEAT</div>
+          <div class="launcher-status"><i></i> WEBGL 2 / READY</div>
+        </div>
+        <div class="launcher-version">3D REMASTER<br><b>2.1</b></div>
+      </div>
+      <div class="launcher-title">
+        <span>LIBERTY</span>
+        <strong>AFTER DARK</strong>
+      </div>
+      <p>Modern 3D top-down urban action. Dynamic lighting, procedural materials, rain, traffic and police.</p>
+      <div class="launcher-actions">
+        <button id="start">ENTER CITY</button>
+        <div class="launcher-note">STATIC BUILD / GITHUB PAGES</div>
+      </div>
+      <div class="launcher-divider"></div>
       <div class="control-grid">
         <span>W A S D</span><b>MOVE / DRIVE</b>
         <span>SHIFT</span><b>SPRINT</b>
@@ -23,6 +39,9 @@
         <span>SPACE / LMB</span><b>SHOOT</b>
         <span>R</span><b>WEATHER</b>
         <span>ESC</span><b>PAUSE</b>
+      </div>
+      <div class="launcher-bottom">
+        <span>THREE.JS</span><span>WEBGL</span><span>PBR</span><span>GLSL WEATHER</span>
       </div>
     </div>
   </div>
