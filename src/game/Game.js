@@ -85,7 +85,7 @@ export class Game {
     this.frameId = requestAnimationFrame(this.boundLoop);
   }
 
-  createMaterials({
+  createMaterials() {
     const p = this.style.palette;
     return {
       asphalt: this.lowPolyMaterial(p.asphalt, 'ground', { roughness: .96 }),
@@ -97,7 +97,7 @@ export class Game {
       accent: this.lowPolyMaterial(p.accent, 'accent', { roughness: .46, emissive: p.accentGlow, emissiveIntensity: .35 })
     };
   }
-  createLighting({
+  createLighting() {
     this.ambient = new THREE.HemisphereLight(0xb9c2d3, 0x11151d, 1.35);
     this.scene.add(this.ambient);
 
