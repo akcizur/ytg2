@@ -27,6 +27,7 @@
   let spawnTick = 0;
   let policeSpawnTick = 0;
   let audioCtx = null;
+  let autosaveClock = 12;
 
   const keys = Object.create(null);
   const mouse = { x: 0, y: 0, down: false, active: false };
@@ -484,7 +485,7 @@
       player.stamina = Math.min(100, player.stamina + dt * 18);
     }
 
-    if (mouse.down) shoot();
+    if (mouse.down || keys[' ']) shoot();
   }
 
   function updateCarPlayer(car, dt) {
@@ -775,6 +776,12 @@
     updateBullets(dt);
     updateMission();
     loseWanted(dt);
+
+    autosaveClock -= dt;
+    if (autosaveClock <= 0) {
+      autosaveClock = 12;
+      saveGame();
+    }
 
     if (player.wanted < .35) {
       cars.forEach(c => {
