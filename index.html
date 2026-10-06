@@ -11,37 +11,52 @@
   <canvas id="game" aria-label="GOTDOPE game canvas"></canvas>
 
   <div id="launcher" class="screen launcher">
-    <div class="launcher-grid" aria-hidden="true"></div>
-    <section class="launcher-panel">
-      <div class="launcher-top">
-        <div>
-          <div class="eyebrow">GOTDOPE // URBAN HEAT</div>
-          <div class="status"><i></i><span>STATIC WEB BUILD</span><b id="deviceBadge">KEYBOARD</b></div>
+    <div class="launcher-skyline" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="launcher-noise" aria-hidden="true"></div>
+
+    <section class="launcher-shell">
+      <div class="launcher-brandline">
+        <span class="brand-mark">GD</span>
+        <span>GOTDOPE</span>
+        <span class="brand-rule"></span>
+        <b>URBAN HEAT</b>
+        <em id="deviceBadge">KEYBOARD</em>
+      </div>
+
+      <div class="launcher-main">
+        <div class="launcher-copy">
+          <div class="eyebrow">DISTRICT 01 / AFTER DARK</div>
+          <h1><span>URBAN</span><strong>HEAT</strong></h1>
+          <p class="lead">A stylized low-poly city built for browser play. Walk. Drive. Escape.</p>
+
+          <div class="launcher-cta">
+            <button id="startButton" class="primary"><span>ENTER CITY</span><b>↗</b></button>
+            <button id="openSettings" class="secondary">CONTROLS</button>
+            <button id="fullscreenButton" class="secondary">FULLSCREEN</button>
+          </div>
+
+          <div class="launcher-meta">
+            <span>THREE.JS</span><span>WEBGL 2</span><span>STATIC / GH PAGES</span>
+          </div>
         </div>
-        <div class="version">3D / REMASTER<br><strong>INPUT READY</strong></div>
+
+        <aside class="launcher-console">
+          <div class="console-head"><span>FIELD MANUAL</span><b>01</b></div>
+          <div class="console-row"><i>MOVE</i><strong id="promptMove">WASD / ARROWS</strong></div>
+          <div class="console-row"><i>AIM</i><strong id="promptAim">MOUSE</strong></div>
+          <div class="console-row"><i>FIRE</i><strong id="promptFire">SPACE / LMB</strong></div>
+          <div class="console-row"><i>ACTION</i><strong id="promptInteract">E</strong></div>
+          <div class="console-foot"><span>INPUT</span><b>ADAPTIVE</b></div>
+        </aside>
       </div>
 
-      <div class="title-wrap"><span>URBAN</span><strong>HEAT</strong></div>
-
-      <p class="lead">
-        Stylized low-poly city. Unified keyboard, mouse, touch and gamepad controls.
-        No pointer lock. No backend.
-      </p>
-
-      <div class="launcher-actions">
-        <button id="startButton" class="primary">ENTER CITY</button>
-        <button id="openSettings" class="secondary">INPUT / SETTINGS</button>
-        <button id="fullscreenButton" class="secondary">FULLSCREEN</button>
+      <div class="launcher-bottomline">
+        <span>GOTDOPE // 3D</span>
+        <span>LOW-POLY CITY / MONOCHROME</span>
+        <span>NO POINTER LOCK</span>
       </div>
-
-      <div class="prompt-strip">
-        <div><span>MOVE</span><b id="promptMove">WASD / ARROWS</b></div>
-        <div><span>AIM</span><b id="promptAim">MOUSE</b></div>
-        <div><span>FIRE</span><b id="promptFire">SPACE / LMB</b></div>
-        <div><span>ACTION</span><b id="promptInteract">E</b></div>
-      </div>
-
-      <div class="launcher-foot"><span>THREE.JS</span><span>WEBGL 2</span><span>LOW POLY</span><span>LOCAL SAVE</span></div>
     </section>
   </div>
 
