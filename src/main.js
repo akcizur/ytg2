@@ -36,12 +36,12 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.0;
 renderer.setClearColor(0x071016, 1);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x071016);
-scene.fog = new THREE.FogExp2(0x071016, 0.0018);
+scene.background = new THREE.Color(0x111111);
+scene.fog = new THREE.FogExp2(0x111111, 0.0022);
 
 const camera = new THREE.PerspectiveCamera(49, innerWidth / innerHeight, 0.1, 2600);
 camera.position.set(250, 430, 300);
@@ -52,10 +52,10 @@ const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
-const hemi = new THREE.HemisphereLight(0x89a3b8, 0x101820, 1.35);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x171717, 1.7);
 scene.add(hemi);
 
-const sun = new THREE.DirectionalLight(0xffdfb5, 3.4);
+const sun = new THREE.DirectionalLight(0xffffff, 3.2);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.near = 1;
@@ -67,7 +67,7 @@ sun.shadow.camera.bottom = -520;
 scene.add(sun);
 scene.add(sun.target);
 
-const moon = new THREE.DirectionalLight(0x7d98c7, 0.25);
+const moon = new THREE.DirectionalLight(0xbdbdbd, 0.3);
 moon.castShadow = false;
 scene.add(moon);
 scene.add(moon.target);
@@ -108,10 +108,10 @@ function heightFromTexture(texture) {
   x.putImageData(img,0,0);
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
 }
-textures.asphalt=noiseCanvas(256,'#34383c',62,2);
-textures.concrete=noiseCanvas(256,'#96948e',42,3);
-textures.roof=noiseCanvas(256,'#4f4c49',48,2);
-textures.ground=noiseCanvas(256,'#2f3b32',70,4);
+textures.asphalt=noiseCanvas(256,'#454545',42,2);
+textures.concrete=noiseCanvas(256,'#858585',34,3);
+textures.roof=noiseCanvas(256,'#5b5b5b',34,2);
+textures.ground=noiseCanvas(256,'#505050',38,4);
 textures.asphaltBump=heightFromTexture(textures.asphalt);
 textures.concreteBump=heightFromTexture(textures.concrete);
 textures.roofBump=heightFromTexture(textures.roof);
@@ -152,21 +152,24 @@ const roofMat=new THREE.MeshStandardMaterial({
 const grassMat=new THREE.MeshStandardMaterial({map:textures.ground,roughness:1});
 
 function buildingMaterial(seed) {
+  const levels = [0.18,0.23,0.28,0.34,0.40,0.47,0.54];
+  const tone = levels[Math.abs(seed)%levels.length];
   return new THREE.MeshStandardMaterial({
-    color:new THREE.Color().setHSL(.56+(seed%7)*.008,.08,.27+.03*(seed%5)),
-    map:textures.concrete, roughness:.82, metalness:.04,
-    bumpMap:textures.concreteBump, bumpScale:.045,
-    emissiveMap:textures.windows, emissive:0x6e4d2a,
-    emissiveIntensity:state.time>18?1.3:.1
+    color:new THREE.Color(tone,tone,tone),
+    map:textures.concrete,
+    roughness:.94,
+    metalness:0,
+    bumpMap:textures.concreteBump,
+    bumpScale:.035,
+    flatShading:true
   });
 }
-
 function createBuilding(x,z,w,d,h){
   const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),buildingMaterial(Math.floor(Math.random()*999)));
   mesh.position.set(x,h/2,z); mesh.castShadow=true; mesh.receiveShadow=true; scene.add(mesh);
   world.buildings.push(mesh);
   world.colliders.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2});
-  const roof=new THREE.Mesh(new THREE.BoxGeometry(w+3,2,d+3),roofMat);
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(w+3,2,d+3),roofMat); roof.geometry.computeVertexNormals();
   roof.position.set(x,h+1,z); roof.castShadow=true; scene.add(roof);
   if(h>70){
     const cap=new THREE.Mesh(new THREE.BoxGeometry(w*.45,8,d*.45),roofMat);
@@ -178,9 +181,9 @@ function createPark(x,z){
   base.position.set(x,.08,z); base.receiveShadow=true; scene.add(base);
   for(let i=0;i<16;i++){
     const tree=new THREE.Group();
-    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.8,1,10,7),new THREE.MeshStandardMaterial({color:0x4b3727,roughness:1}));
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.8,1,10,6),new THREE.MeshStandardMaterial({color:0x3c3c3c,roughness:1,flatShading:true}));
     trunk.position.y=5;
-    const crown=new THREE.Mesh(new THREE.SphereGeometry(6+Math.random()*4,10,8),new THREE.MeshStandardMaterial({color:0x274e32,roughness:1}));
+    const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(6+Math.random()*4,1),new THREE.MeshStandardMaterial({color:0x5e5e5e,roughness:1,flatShading:true}));
     crown.position.y=11; tree.add(trunk,crown);
     tree.position.set(x+(Math.random()-.5)*190,0,z+(Math.random()-.5)*190);
     tree.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}}); scene.add(tree);
@@ -188,16 +191,16 @@ function createPark(x,z){
 }
 function createLamp(x,z){
   const g=new THREE.Group();
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.55,.75,18,8),new THREE.MeshStandardMaterial({color:0x232a31,metalness:.7,roughness:.36}));
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.55,.75,18,8),new THREE.MeshStandardMaterial({color:0x303030,metalness:.55,roughness:.5,flatShading:true}));
   pole.position.y=9;
-  const head=new THREE.Mesh(new THREE.BoxGeometry(3,1.2,2.5),new THREE.MeshStandardMaterial({color:0x11161b,metalness:.65,roughness:.3,emissive:0x9e6b2c,emissiveIntensity:.8}));
+  const head=new THREE.Mesh(new THREE.BoxGeometry(3,1.2,2.5),new THREE.MeshStandardMaterial({color:0x181818,metalness:.35,roughness:.5,emissive:0xffffff,emissiveIntensity:.25,flatShading:true}));
   head.position.y=18;
-  const light=new THREE.PointLight(0xffc477,7,110,2); light.position.y=16;
+  const light=new THREE.PointLight(0xffffff,5.5,105,2); light.position.y=16;
   g.add(pole,head,light); g.position.set(x,0,z); scene.add(g);
   world.streetLights.push({light,head});
 }
 function createPuddle(x,z,size){
-  const m=new THREE.MeshPhysicalMaterial({color:0x293943,roughness:.08,metalness:.9,transmission:.08,transparent:true,opacity:.25});
+  const m=new THREE.MeshPhysicalMaterial({color:0x777777,roughness:.14,metalness:.7,transmission:.05,transparent:true,opacity:.20});
   const p=new THREE.Mesh(new THREE.CircleGeometry(size,32),m);
   p.rotation.x=-Math.PI/2; p.position.set(x,.145,z); scene.add(p); world.puddles.push(p);
 }
@@ -206,12 +209,7 @@ function createCity(){
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(world.size,world.size),asphaltMat);
   floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
 
-  const roadMat=new THREE.MeshStandardMaterial({
-    color:0x171b20,
-    roughness:.68,
-    metalness:.08,
-    envMapIntensity:.55
-  });
+  const roadMat=new THREE.MeshStandardMaterial({color:0x242424,roughness:.96,metalness:0,flatShading:true});
   world.roadSurfaceMaterial=roadMat;
   for(let gx=-world.half;gx<=world.half;gx+=world.grid){
     const road=new THREE.Mesh(new THREE.BoxGeometry(world.roadWidth,.12,world.size),roadMat);
@@ -224,7 +222,7 @@ function createCity(){
     world.roads.push({x:0,z:gz,vertical:false});
   }
 
-  const lineMat=new THREE.MeshStandardMaterial({color:0xc5a448,roughness:.5,metalness:.08});
+  const lineMat=new THREE.MeshStandardMaterial({color:0x888888,roughness:1,metalness:0,flatShading:true});
   for(let gx=-world.half;gx<=world.half;gx+=world.grid) for(let z=-world.half;z<world.half;z+=80){
     const lane=new THREE.Mesh(new THREE.BoxGeometry(2,.13,36),lineMat); lane.position.set(gx,.13,z); scene.add(lane);
   }
@@ -255,16 +253,17 @@ function createCity(){
 
 function createCar(color, police){
   const g=new THREE.Group();
-  const bodyMat=new THREE.MeshPhysicalMaterial({color,metalness:.62,roughness:.28,clearcoat:.75,clearcoatRoughness:.18});
-  const glassMat=new THREE.MeshPhysicalMaterial({color:0x0d151c,metalness:.1,roughness:.12,transmission:.12,transparent:true,opacity:.87});
-  const tyre=new THREE.MeshStandardMaterial({color:0x090a0b,roughness:.95});
+  const carTone = police ? 0.72 : 0.28 + (Number(color)&255)/255*.35;
+  const bodyMat=new THREE.MeshPhysicalMaterial({color:new THREE.Color(carTone,carTone,carTone),metalness:.32,roughness:.38,clearcoat:.55,clearcoatRoughness:.24,flatShading:true});
+  const glassMat=new THREE.MeshPhysicalMaterial({color:0x191919,metalness:.05,roughness:.18,transmission:.05,transparent:true,opacity:.9,flatShading:true});
+  const tyre=new THREE.MeshStandardMaterial({color:0x0b0b0b,roughness:1,flatShading:true});
   const body=new THREE.Mesh(new THREE.BoxGeometry(4.1,1.1,8.8),bodyMat); body.position.y=1.05;
   const cabin=new THREE.Mesh(new THREE.BoxGeometry(3.35,.92,4.0),glassMat); cabin.position.set(0,1.72,-.15);
   g.add(body,cabin);
   for(const x of [-1.9,1.9]) for(const z of [-2.95,2.95]){
     const w=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,.45,16),tyre); w.rotation.z=Math.PI/2; w.position.set(x,.78,z); g.add(w);
   }
-  const lampMat=new THREE.MeshStandardMaterial({color:0xf7f1cf,emissive:0xffe9ac,emissiveIntensity:1.8});
+  const lampMat=new THREE.MeshStandardMaterial({color:0xcfcfcf,emissive:0xffffff,emissiveIntensity:1.1,flatShading:true});
   for(const x of [-1.25,1.25]){
     const l=new THREE.Mesh(new THREE.BoxGeometry(.7,.45,.2),lampMat);
     l.position.set(x,1.28,4.5);g.add(l);
@@ -277,8 +276,8 @@ function createCar(color, police){
   const rearBumper=frontBumper.clone();
   rearBumper.position.z=-4.42;g.add(rearBumper);
   if(police){
-    const red=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xff2839,emissiveIntensity:3});
-    const blue=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x3e8dff,emissiveIntensity:3});
+    const red=new THREE.MeshStandardMaterial({color:0xbdbdbd,emissive:0xffffff,emissiveIntensity:2.4,flatShading:true});
+    const blue=new THREE.MeshStandardMaterial({color:0x5f5f5f,emissive:0xffffff,emissiveIntensity:1.4,flatShading:true});
     const r=new THREE.Mesh(new THREE.BoxGeometry(.62,.25,.8),red);r.position.set(-.35,2.3,0);
     const b=new THREE.Mesh(new THREE.BoxGeometry(.62,.25,.8),blue);b.position.set(.35,2.3,0);g.add(r,b);
   }
@@ -316,8 +315,8 @@ function addMarkedBeacon(car){
 }
 function createNPC(kind){
   const g=new THREE.Group();
-  const skin=new THREE.MeshStandardMaterial({color:0xd0a184,roughness:.8});
-  const coat=new THREE.MeshStandardMaterial({color:kind==='gang'?0x4b2026:0x42484e,roughness:.7});
+  const skin=new THREE.MeshStandardMaterial({color:0x9a9a9a,roughness:.95,flatShading:true});
+  const coat=new THREE.MeshStandardMaterial({color:kind==='gang'?0x575757:0x353535,roughness:.92,flatShading:true});
   const body=new THREE.Mesh(new THREE.CapsuleGeometry(.52,1.5,4,8),coat);body.position.y=1.2;
   const head=new THREE.Mesh(new THREE.SphereGeometry(.45,12,8),skin);head.position.y=2.62;g.add(body,head);
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});scene.add(g);
@@ -351,16 +350,16 @@ placeEntities();
 const player={x:-480,z:-420,yaw:0,speed:0,car:null,fire:0,invuln:0};
 world.player=player;
 const playerMesh=new THREE.Group();
-const pBody=new THREE.Mesh(new THREE.CapsuleGeometry(.6,1.6,4,9),new THREE.MeshStandardMaterial({color:0xd7ff48,roughness:.5}));
+const pBody=new THREE.Mesh(new THREE.CapsuleGeometry(.6,1.6,4,9),new THREE.MeshStandardMaterial({color:0xd7d7d7,roughness:.72,flatShading:true}));
 pBody.position.y=1.25;
-const pHead=new THREE.Mesh(new THREE.SphereGeometry(.48,12,9),new THREE.MeshStandardMaterial({color:0xc89a7d,roughness:.7}));
+const pHead=new THREE.Mesh(new THREE.SphereGeometry(.48,12,9),new THREE.MeshStandardMaterial({color:0x8c8c8c,roughness:.88,flatShading:true}));
 pHead.position.y=2.72;playerMesh.add(pBody,pHead);
 playerMesh.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});scene.add(playerMesh);
 
 const jobs=[
-  {x:-480,z:-420,c:0xd7ff48,label:'SAFEHOUSE'},
-  {x:900,z:-900,c:0xffb84d,label:'DOCKS'},
-  {x:900,z:900,c:0x6fb6ff,label:'GARAGE'}
+  {x:-480,z:-420,c:0xffffff,label:'SAFEHOUSE'},
+  {x:900,z:-900,c:0xbdbdbd,label:'DOCKS'},
+  {x:900,z:900,c:0x7f7f7f,label:'GARAGE'}
 ];
 for(const j of jobs){
   const g=new THREE.Group();
@@ -564,7 +563,7 @@ function updateWeather(dt){
   sun.intensity=night?.9:3.6;
   moon.intensity=night?.34:.06;
   hemi.intensity=night?.62:1.35;
-  scene.fog.color.set(state.weather===3?0x53606b:night?0x071016:0x7d8c95);
+  scene.fog.color.set(state.weather===3?0x666666:night?0x101010:0x6f6f6f);
   scene.fog.density=state.weather===3?.0045:state.weather===2?.0028:.0017;
   bloom.strength=night?.72:.38;
   if(world.rain){
@@ -572,9 +571,9 @@ function updateWeather(dt){
     world.rain.position.set(player.x,0,player.z);
   }
   if(world.rainMaterial)world.rainMaterial.uniforms.uTime.value=performance.now()/1000;
-  const wet=state.weather>0 ? .28 : .68;
+  const wet=state.weather>0 ? .34 : .86;
   if(world.roadSurfaceMaterial) world.roadSurfaceMaterial.roughness=wet;
-  asphaltMat.roughness=state.weather>0?.48:.77;
+  asphaltMat.roughness=state.weather>0?.42:.86;
   for(const b of world.buildings){
     if(b.material && 'emissiveIntensity' in b.material)b.material.emissiveIntensity=night?1.3:.08;
   }
@@ -593,7 +592,7 @@ function createRain(){
     transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     uniforms:{uTime:{value:0}},
     vertexShader:'uniform float uTime; varying float vA; void main(){vec3 p=position; p.y=mod(p.y-uTime*320.0,520.0); p.x+=sin(p.z*.01+uTime)*3.0; vec4 mv=modelViewMatrix*vec4(p,1.0); gl_Position=projectionMatrix*mv; gl_PointSize=2.2; vA=.25+.75*clamp(p.y/520.0,0.0,1.0);}',
-    fragmentShader:'varying float vA; void main(){vec2 uv=gl_PointCoord.xy-.5; if(length(uv)>.5)discard; gl_FragColor=vec4(.55,.72,.95,.34*vA);}'
+    fragmentShader:'varying float vA; void main(){vec2 uv=gl_PointCoord.xy-.5; if(length(uv)>.5)discard; gl_FragColor=vec4(.78,.78,.78,.26*vA);}'
   });
   world.rainMaterial=mat;world.rain=new THREE.Points(geo,mat);world.rain.frustumCulled=false;scene.add(world.rain);
 }
