@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#090b0e">
+  <meta name="description" content="YTG2 — top-down urban action game for GitHub Pages.">
+  <title>YTG2 — Urban Heat</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="game" aria-label="YTG2 game canvas"></canvas>
+
+    <section id="menu" class="overlay active">
+      <div class="panel hero">
+        <div class="eyebrow">YTG2 / STATIC BUILD</div>
+        <h1>URBAN HEAT</h1>
+        <p>Top-down urban action. Steal cars, complete jobs, survive the police.</p>
+        <button id="start-btn">START GAME</button>
+        <div class="keys">
+          <span>WASD / ARROWS</span><span>MOVE / DRIVE</span>
+          <span>E</span><span>ENTER / EXIT</span>
+          <span>SPACE / LMB</span><span>SHOOT</span>
+          <span>ESC</span><span>PAUSE</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="pause" class="overlay">
+      <div class="panel">
+        <div class="eyebrow">GAME PAUSED</div>
+        <h2>PAUSED</h2>
+        <p>ESC pokračuje ve hře.</p>
+        <button id="resume-btn">RESUME</button>
+        <button id="save-btn" class="secondary">SAVE NOW</button>
+      </div>
+    </section>
+
+    <section id="death" class="overlay">
+      <div class="panel">
+        <div class="eyebrow">RUN FAILED</div>
+        <h2>BUSTED</h2>
+        <p id="death-text">Ztratil ses ve městě.</p>
+        <button id="respawn-btn">RESPAWN</button>
+      </div>
+    </section>
+
+    <div id="mobile-hint">Landscape mode doporučeno.</div>
+  </main>
+  <script src="./game.js" defer></script>
+</body>
+</html>
