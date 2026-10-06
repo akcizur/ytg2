@@ -181,6 +181,14 @@ export class Game {
       for (const light of car.headlights) light.color.setHex(0xffd6a0);
     }
 
+    const markerColors = [0xffc857, 0x3aa6a8, 0xd65b55, 0xd6a84f];
+    this.world.jobs.forEach((job, index) => {
+      for (const child of job.group.children) {
+        if (!child.material?.color) continue;
+        child.material.color.setHex(markerColors[index % markerColors.length]);
+      }
+    });
+
     this.bloom.strength = 0.46;
     this.bloom.radius = 0.74;
     this.bloom.threshold = 0.72;
