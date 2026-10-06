@@ -119,26 +119,41 @@ export class Game {
     this.moon = new THREE.DirectionalLight(0x7182d9, .42);
     this.scene.add(this.moon, this.moon.target);
   }
+  base64ToArrayBuffer(text) {
+    const raw = atob(text.trim());
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i += 1) bytes[i] = raw.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  parseFreeModel(buffer) {
+    return new Promise((resolve, reject) => {
+      this.gltfLoader.parse(buffer, '', resolve, reject);
+    });
+  }
+
   loadFreeModels() {
     const base = import.meta.env.BASE_URL;
     const sources = {
-      building: `${base}assets/models/kenney/building-a.glb`,
-      skyscraper: `${base}assets/models/kenney/building-skyscraper-a.glb`,
-      roadTile: `${base}assets/models/kenney/tile-low.glb`,
-      streetLight: `${base}assets/models/kenney/light-curved.glb`,
-      sedan: `${base}assets/models/kenney/sedan.glb`,
-      police: `${base}assets/models/kenney/police.glb`,
-      tree: `${base}assets/models/kenney/tree-default.glb`
+      building: `${base}assets/models/kenney/building-a.glb.b64`,
+      skyscraper: `${base}assets/models/kenney/building-skyscraper-a.glb.b64`,
+      streetLight: `${base}assets/models/kenney/light-curved.glb.b64`,
+      sedan: `${base}assets/models/kenney/sedan.glb.b64`,
+      police: `${base}assets/models/kenney/police.glb.b64`,
+      tree: `${base}assets/models/kenney/tree-default.glb.b64`
     };
 
-    return Promise.all(Object.entries(sources).map(([key, url]) =>
-      new Promise((resolve, reject) => {
-        this.gltfLoader.load(url, (gltf) => {
-          this.freeModels[key] = gltf.scene;
-          resolve(gltf.scene);
-        }, undefined, reject);
-      })
-    ));
+    return Promise.allSettled(Object.entries(sources).map(async ([key, url]) => {
+      const response = await fetch(url, { cache: 'force-cache' });
+      if (!response.ok) throw new Error(`ASSET_${response.status}_${key}`);
+      const gltf = await this.parseFreeModel(await response.arrayBuffer().then((buffer) => {
+        const bytes = new Uint8Array(buffer);
+        const text = new TextDecoder().decode(bytes);
+        return this.base64ToArrayBuffer(text);
+      }));
+      this.freeModels[key] = gltf.scene;
+      return key;
+    }));
   }
 
   cloneFreeModel(key) {
