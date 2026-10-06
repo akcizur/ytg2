@@ -3,6 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const SAVE_KEY = 'gotdope-save-v2';
 const WORLD_SIZE = 2400;
@@ -56,6 +57,8 @@ export class Game {
 
     this.style = this.createLowPolyStyle();
     this.applyLowPolyRenderer();
+    this.gltfLoader = new GLTFLoader();
+    this.freeModels = Object.create(null);
 
     this.rng = makeRng(20261006);
     this.state = {
@@ -77,6 +80,7 @@ export class Game {
     this.placeActors();
     this.bindEvents();
     this.loadSave();
+    this.loadFreeModels().then(() => this.applyFreeModels()).catch(() => {});
 
     this.updateHUD();
     this.render();
@@ -115,6 +119,154 @@ export class Game {
     this.moon = new THREE.DirectionalLight(0x7182d9, .42);
     this.scene.add(this.moon, this.moon.target);
   }
+  loadFreeModels() {
+    const base = import.meta.env.BASE_URL;
+    const sources = {
+      building: `${base}assets/models/kenney/building-a.glb`,
+      skyscraper: `${base}assets/models/kenney/building-skyscraper-a.glb`,
+      roadTile: `${base}assets/models/kenney/tile-low.glb`,
+      streetLight: `${base}assets/models/kenney/light-curved.glb`,
+      sedan: `${base}assets/models/kenney/sedan.glb`,
+      police: `${base}assets/models/kenney/police.glb`,
+      tree: `${base}assets/models/kenney/tree-default.glb`
+    };
+
+    return Promise.all(Object.entries(sources).map(([key, url]) =>
+      new Promise((resolve, reject) => {
+        this.gltfLoader.load(url, (gltf) => {
+          this.freeModels[key] = gltf.scene;
+          resolve(gltf.scene);
+        }, undefined, reject);
+      })
+    ));
+  }
+
+  cloneFreeModel(key) {
+    const source = this.freeModels[key];
+    if (!source) return null;
+    const clone = source.clone(true);
+
+    clone.traverse((node) => {
+      if (!node.isMesh) return;
+      node.castShadow = true;
+      node.receiveShadow = true;
+      if (Array.isArray(node.material)) {
+        node.material = node.material.map((material) => material?.clone?.() || material);
+      } else if (node.material?.clone) {
+        node.material = node.material.clone();
+      }
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      for (const material of materials) {
+        if (!material) continue;
+        material.flatShading = true;
+        material.needsUpdate = true;
+        if (material.roughness !== undefined) material.roughness = Math.max(.38, material.roughness);
+      }
+    });
+    return clone;
+  }
+
+  fitFreeModel(object, width, height, depth, yBase = 0) {
+    const box = new THREE.Box3().setFromObject(object);
+    const size = box.getSize(new THREE.Vector3());
+    if (!size.x || !size.y || !size.z) return object;
+
+    object.scale.set(width / size.x, height / size.y, depth / size.z);
+    const fitted = new THREE.Box3().setFromObject(object);
+    object.position.y += yBase - fitted.min.y;
+    return object;
+  }
+
+  styleFreeModel(object, kind = 'prop') {
+    const p = this.style.palette;
+    const palettes = {
+      building: [p.buildingA, p.buildingB, p.buildingC, p.trim],
+      vehicle: [p.red, p.cyan, p.carGold, p.glass],
+      police: [p.police, p.cyan, p.red, p.glass],
+      nature: [p.grass, p.cyan, p.trim],
+      prop: [p.trim, p.roof, p.window]
+    };
+    const colors = palettes[kind] || palettes.prop;
+    let index = 0;
+
+    object.traverse((node) => {
+      if (!node.isMesh) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      for (const material of materials) {
+        if (!material?.color) continue;
+        const name = (node.name || material.name || '').toLowerCase();
+        if (kind === 'vehicle' && (name.includes('glass') || name.includes('window'))) {
+          material.color.setHex(p.glass);
+        } else if (kind === 'police' && (name.includes('light') || name.includes('bar'))) {
+          material.color.setHex(p.cyan);
+          if (material.emissive) {
+            material.emissive.setHex(p.cyan);
+            material.emissiveIntensity = 1.8;
+          }
+        } else {
+          material.color.setHex(colors[index++ % colors.length]);
+        }
+        material.flatShading = true;
+        material.needsUpdate = true;
+      }
+    });
+    return object;
+  }
+
+  applyFreeModels() {
+    if (!this.freeModels.building) return;
+
+    this.world.buildings.forEach((building, index) => {
+      const size = building.userData.lowPolySize;
+      if (!size) return;
+      const key = index % 4 === 0 ? 'skyscraper' : 'building';
+      const model = this.cloneFreeModel(key);
+      if (!model) return;
+      this.styleFreeModel(model, 'building');
+      this.fitFreeModel(model, size.w, size.h, size.d, 0);
+      building.clear();
+      building.add(model);
+    });
+
+    this.world.trees.forEach((tree, index) => {
+      const model = this.cloneFreeModel('tree');
+      if (!model) return;
+      this.styleFreeModel(model, 'nature');
+      model.scale.setScalar(.82 + (index % 4) * .08);
+      tree.clear();
+      tree.add(model);
+    });
+
+    this.world.lights.forEach((light) => {
+      const model = this.cloneFreeModel('streetLight');
+      if (!model) return;
+      this.styleFreeModel(model, 'prop');
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+      model.position.y += 9;
+      light.group.clear();
+      light.group.add(model, light.point);
+    });
+
+    this.world.cars.forEach((car) => {
+      const key = car.police ? 'police' : 'sedan';
+      const model = this.cloneFreeModel(key);
+      if (!model) return;
+      this.styleFreeModel(model, car.police ? 'police' : 'vehicle');
+      this.fitFreeModel(model, 4.5, 2.8, 8.8, 0);
+      const gameplayLights = car.headlights.flatMap((light) => [light, light.target]);
+      car.group.clear();
+      car.group.add(model, ...gameplayLights);
+
+      if (car.police) {
+        const siren = new THREE.PointLight(this.style.palette.cyan, 4, 22, 2);
+        siren.position.y = 2.2;
+        car.group.add(siren);
+      }
+    });
+  }
+
   createLowPolyStyle() {
     return {
       rules: {
@@ -308,6 +460,7 @@ export class Game {
     const bodyColor = variant < .34 ? p.buildingA : variant < .67 ? p.buildingB : p.buildingC;
     const root = new THREE.Group();
     root.position.set(x, 0, z);
+    root.userData.lowPolySize = { w, d, h };
 
     const bevel = Math.min(w, d) * this.style.rules.bevelRatio;
     const baseH = h * (.66 + r() * .16);
@@ -460,7 +613,7 @@ export class Game {
     group.add(pole, point);
     group.position.set(x, 0, z);
     this.scene.add(group);
-    this.world.lights.push({ point, head });
+    this.world.lights.push({ group, point, head });
   }
   createPuddle(x, z, size) {
     const puddle = new THREE.Mesh(
