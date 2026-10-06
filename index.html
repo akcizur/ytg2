@@ -1,53 +1,78 @@
 <!doctype html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#090b0e">
-  <meta name="description" content="YTG2 — top-down urban action game for GitHub Pages.">
-  <title>YTG2 — Urban Heat</title>
-  <link rel="stylesheet" href="./styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#071016" />
+  <meta name="description" content="YTG2 — modern 3D top-down urban action game." />
+  <title>YTG2 — Urban Heat 3D</title>
 </head>
 <body>
-  <main id="game-shell">
-    <canvas id="game" aria-label="YTG2 game canvas"></canvas>
+  <canvas id="game"></canvas>
 
-    <section id="menu" class="overlay active">
-      <div class="panel hero">
-        <div class="eyebrow">YTG2 / STATIC BUILD</div>
-        <h1>URBAN HEAT</h1>
-        <p>Top-down urban action. Steal cars, complete jobs, survive the police.</p>
-        <button id="start-btn">START GAME</button>
-        <div class="keys">
-          <span>WASD / ARROWS</span><span>MOVE / DRIVE</span>
-          <span>E</span><span>ENTER / EXIT</span>
-          <span>SPACE / LMB</span><span>SHOOT</span>
-          <span>ESC</span><span>PAUSE</span>
-        </div>
+  <div id="boot" class="screen">
+    <div class="panel hero">
+      <div class="kicker">YTG2 // URBAN HEAT</div>
+      <h1>LIBERTY AFTER DARK</h1>
+      <p>Modern 3D top-down urban action. Dynamic lighting, PBR-style procedural materials, rain, traffic and police.</p>
+      <button id="start">ENTER CITY</button>
+      <div class="control-grid">
+        <span>W A S D</span><b>MOVE / DRIVE</b>
+        <span>SHIFT</span><b>SPRINT</b>
+        <span>E</span><b>ENTER / EXIT / INTERACT</b>
+        <span>SPACE / LMB</span><b>SHOOT</b>
+        <span>R</span><b>WEATHER</b>
+        <span>ESC</span><b>PAUSE</b>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <section id="pause" class="overlay">
-      <div class="panel">
-        <div class="eyebrow">GAME PAUSED</div>
-        <h2>PAUSED</h2>
-        <p>ESC pokračuje ve hře.</p>
-        <button id="resume-btn">RESUME</button>
-        <button id="save-btn" class="secondary">SAVE NOW</button>
-      </div>
-    </section>
+  <div id="pause" class="screen hidden">
+    <div class="panel">
+      <div class="kicker">SYSTEM PAUSED</div>
+      <h2>PAUSED</h2>
+      <button id="resume">RESUME</button>
+      <button id="save" class="ghost">SAVE</button>
+    </div>
+  </div>
 
-    <section id="death" class="overlay">
-      <div class="panel">
-        <div class="eyebrow">RUN FAILED</div>
-        <h2>BUSTED</h2>
-        <p id="death-text">Ztratil ses ve městě.</p>
-        <button id="respawn-btn">RESPAWN</button>
-      </div>
-    </section>
+  <div id="busted" class="screen hidden">
+    <div class="panel">
+      <div class="kicker danger">RUN TERMINATED</div>
+      <h2>BUSTED</h2>
+      <p id="bustedText"></p>
+      <button id="respawn">RESPAWN</button>
+    </div>
+  </div>
 
-    <div id="mobile-hint">Landscape mode doporučeno.</div>
-  </main>
-  <script src="./game.js" defer></script>
+  <div id="hud">
+    <div class="hud-card top-left">
+      <div class="brand">YTG2 <span>3D</span></div>
+      <div class="stat-row"><label>HEALTH</label><div class="bar"><i id="health"></i></div></div>
+      <div class="stat-row"><label>STAMINA</label><div class="bar blue"><i id="stamina"></i></div></div>
+      <div class="money" id="money">$1,250</div>
+    </div>
+
+    <div class="hud-card top-right">
+      <div class="city">LIBERTY DISTRICT</div>
+      <div class="weather"><span id="weatherIcon">◌</span><span id="weather">CLEAR</span></div>
+      <div class="stars" id="stars">☆☆☆☆☆</div>
+    </div>
+
+    <div class="mission hud-card">
+      <div class="mission-head"><span id="missionNo">MISSION 01</span><span id="time">18:00</span></div>
+      <div id="missionText">Go to the safehouse.</div>
+      <div class="hint" id="hint">E — interact</div>
+    </div>
+
+    <div class="crosshair"></div>
+    <div class="minimap"><canvas id="mapCanvas" width="180" height="180"></canvas></div>
+
+    <div class="bottom-left">
+      <span>WASD</span> MOVE <span>E</span> INTERACT <span>SPACE</span> FIRE <span>R</span> WEATHER
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
