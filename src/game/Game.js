@@ -72,6 +72,7 @@ export class Game {
     this.createJobs();
     this.createRain();
     this.placeActors();
+    this.applyStylizedTheme();
     this.bindEvents();
     this.loadSave();
 
@@ -106,6 +107,83 @@ export class Game {
 
     this.moon = new THREE.DirectionalLight(0xbababa, 0.28);
     this.scene.add(this.moon, this.moon.target);
+  }
+
+  applyStylizedTheme() {
+    const palette = {
+      ink: 0x0d1018,
+      asphalt: 0x2a2f3a,
+      road: 0x161a22,
+      roof: 0x3a414e,
+      trim: 0x596170,
+      window: 0xffc857,
+      lane: 0xd8b56a,
+      grass: 0x30453b,
+      carA: 0xd65b55,
+      carB: 0x3aa6a8,
+      carC: 0xd6a84f,
+      police: 0x252a38,
+      civilian: 0x8b748e,
+      gang: 0x8f4146,
+      head: 0xc2a88b
+    };
+
+    this.scene.background = new THREE.Color(palette.ink);
+    this.scene.fog.color.setHex(0x141923);
+
+    this.materials.asphalt.color.setHex(palette.asphalt);
+    this.materials.road.color.setHex(palette.road);
+    this.materials.roof.color.setHex(palette.roof);
+    this.materials.grass.color.setHex(palette.grass);
+    this.materials.lane.color.setHex(palette.lane);
+
+    this.ambient.color.setHex(0xb9c2d3);
+    this.ambient.groundColor.setHex(0x10141b);
+    this.sun.color.setHex(0xffd8aa);
+    this.moon.color.setHex(0x6f7ed8);
+
+    const carColors = [palette.carA, palette.carB, palette.carC];
+    let carIndex = 0;
+
+    this.scene.traverse((node) => {
+      if (!node.isMesh || !node.material) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+
+      for (const material of materials) {
+        const role = material.userData?.role;
+        if (role === 'building') material.color.setHex(0x454b58);
+        else if (role === 'trim') material.color.setHex(palette.trim);
+        else if (role === 'window') {
+          material.color.setHex(palette.window);
+          material.emissive.setHex(0xa96f18);
+          material.emissiveIntensity = 0.8;
+          material.roughness = 0.48;
+        } else if (role === 'roof') material.color.setHex(palette.roof);
+        else if (role === 'carBody') material.color.setHex(carColors[(carIndex++) % carColors.length]);
+        else if (role === 'policeBody') material.color.setHex(palette.police);
+        else if (role === 'carGlass') material.color.setHex(0x111722);
+        else if (role === 'carTire') material.color.setHex(0x090b10);
+        else if (role === 'npcGang') material.color.setHex(palette.gang);
+        else if (role === 'npcCivilian') material.color.setHex(palette.civilian);
+        else if (role === 'npcHead') material.color.setHex(palette.head);
+      }
+    });
+
+    for (const light of this.world.lights) {
+      light.point.color.setHex(0xffb95c);
+      light.point.intensity *= 1.08;
+      light.head.material.color.setHex(0xffd37a);
+      light.head.material.emissive.setHex(0xff8a2e);
+    }
+
+    for (const car of this.world.cars) {
+      if (!car.police) continue;
+      for (const light of car.headlights) light.color.setHex(0xffd6a0);
+    }
+
+    this.bloom.strength = 0.46;
+    this.bloom.radius = 0.74;
+    this.bloom.threshold = 0.72;
   }
 
   createCity() {
@@ -170,7 +248,9 @@ export class Game {
     const material = new THREE.MeshStandardMaterial({
       color: grayscale(tone), roughness: 0.94, flatShading: true
     });
+    material.userData.role = 'building';
     const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+    building.userData.role = 'building';
     building.position.set(x, h / 2, z);
     building.castShadow = true; building.receiveShadow = true; this.scene.add(building);
 
@@ -183,9 +263,11 @@ export class Game {
     const trim = new THREE.MeshStandardMaterial({
       color: grayscale(Math.min(.72, tone + .16)), roughness: 0.9, flatShading: true
     });
+    trim.userData.role = 'trim';
     const dark = new THREE.MeshStandardMaterial({
       color: grayscale(Math.max(.06, tone - .15)), roughness: 0.72, metalness: .05, flatShading: true
     });
+    dark.userData.role = 'window';
 
     // Low-poly facade ribs give the box mass a stylized architectural silhouette.
     const ribCountX = Math.max(2, Math.floor(w / 42));
@@ -220,6 +302,7 @@ export class Game {
     }
 
     const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 6, 2.6, d + 6), this.materials.roof);
+    roof.userData.role = 'roof';
     roof.position.set(x, h + 1.3, z);
     roof.castShadow = true; roof.receiveShadow = true; this.scene.add(roof);
 
@@ -328,17 +411,20 @@ export class Game {
     const group = new THREE.Group();
     const tone = police ? 0.72 : 0.25 + color * 0.38;
     const bodyMaterial = new THREE.MeshStandardMaterial({ color: grayscale(tone), roughness: 0.38, metalness: 0.25, flatShading: true });
+    bodyMaterial.userData.role = police ? 'policeBody' : 'carBody';
     const glassMaterial = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.25, metalness: 0.05, flatShading: true });
+    glassMaterial.userData.role = 'carGlass';
     const tireMaterial = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 1, flatShading: true });
+    tireMaterial.userData.role = 'carTire';
 
-    const body = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.15, 8.6), bodyMaterial); body.position.y = 1.05;
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(3.35, 1.0, 4.15), glassMaterial); cabin.position.set(0, 1.8, -0.15);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.15, 8.6), bodyMaterial); body.position.y = 1.05; body.userData.role = police ? 'policeBody' : 'carBody';
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(3.35, 1.0, 4.15), glassMaterial); cabin.position.set(0, 1.8, -0.15); cabin.userData.role = 'carGlass';
     group.add(body, cabin);
 
     for (const x of [-1.9, 1.9]) {
       for (const z of [-2.9, 2.9]) {
         const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.48, 12), tireMaterial);
-        wheel.rotation.z = Math.PI / 2; wheel.position.set(x, 0.76, z); group.add(wheel);
+        wheel.rotation.z = Math.PI / 2; wheel.position.set(x, 0.76, z); wheel.userData.role = 'carTire'; group.add(wheel);
       }
     }
 
@@ -382,14 +468,18 @@ export class Game {
 
   createNPC(kind = 'civilian') {
     const group = new THREE.Group();
+    const bodyMaterial = new THREE.MeshStandardMaterial({ color: kind === 'gang' ? 0x4f4f4f : 0x575757, roughness: 0.95, flatShading: true });
+    bodyMaterial.userData.role = kind === 'gang' ? 'npcGang' : 'npcCivilian';
     const body = new THREE.Mesh(
       new THREE.CapsuleGeometry(0.52, 1.45, 4, 7),
-      new THREE.MeshStandardMaterial({ color: kind === 'gang' ? 0x4f4f4f : 0x575757, roughness: 0.95, flatShading: true })
+      bodyMaterial
     );
-    body.position.y = 1.15;
+    body.position.y = 1.15; body.userData.role = bodyMaterial.userData.role;
+    const headMaterial = new THREE.MeshStandardMaterial({ color: 0x898989, roughness: 1, flatShading: true });
+    headMaterial.userData.role = 'npcHead';
     const head = new THREE.Mesh(
       new THREE.SphereGeometry(0.43, 9, 7),
-      new THREE.MeshStandardMaterial({ color: 0x898989, roughness: 1, flatShading: true })
+      headMaterial
     );
     head.position.y = 2.55;
     group.add(body, head);
