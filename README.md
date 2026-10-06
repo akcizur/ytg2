@@ -106,3 +106,7 @@ The world uses procedural low-poly rules rather than post-process styling:
 - emissive accents are reserved for windows, lamps and mission-readable elements;
 - detail is concentrated on silhouette, large planes and readable color blocks;
 - no high-density subdivision is used for gameplay meshes.
+
+### Bundled free 3D models
+
+The static build now bundles CC0 Kenney models for buildings, vehicles, street lights and trees. They are loaded from `public/assets/models/kenney/` and recolored through the game's low-poly style system, with procedural geometry retained as the initial/fallback layer.
