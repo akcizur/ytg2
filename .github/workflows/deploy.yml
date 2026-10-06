@@ -1,4 +1,4 @@
-name: Deploy YTG2 3D to GitHub Pages
+name: Deploy GOTDOPE to GitHub Pages
 
 on:
   push:

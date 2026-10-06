@@ -1,96 +1,139 @@
 <!doctype html>
-<html lang="cs">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#071016" />
-  <meta name="description" content="YTG2 — modern 3D top-down urban action game." />
-  <title>YTG2 — Urban Heat 3D</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta name="description" content="GOTDOPE — Urban Heat 3D. Responsive browser game.">
+  <title>GOTDOPE — Urban Heat 3D</title>
 </head>
 <body>
-  <canvas id="game"></canvas>
+  <canvas id="game" aria-label="GOTDOPE game canvas"></canvas>
 
-  <div id="boot" class="screen launcher">
-    <div class="launcher-backdrop" aria-hidden="true">
-      <span></span><span></span><span></span><span></span>
-    </div>
-    <div class="launcher-panel" role="dialog" aria-label="YTG2 launcher">
+  <div id="launcher" class="screen launcher">
+    <div class="launcher-grid" aria-hidden="true"></div>
+    <section class="launcher-panel">
       <div class="launcher-top">
         <div>
-          <div class="kicker">YTG2 // URBAN HEAT</div>
-          <div class="launcher-status"><i></i> WEBGL 2 / READY</div>
+          <div class="eyebrow">GOTDOPE // URBAN HEAT</div>
+          <div class="status"><i></i><span>STATIC WEB BUILD</span><b id="deviceBadge">KEYBOARD</b></div>
         </div>
-        <div class="launcher-version">3D REMASTER<br><b>2.1</b></div>
+        <div class="version">3D / REMASTER<br><strong>INPUT READY</strong></div>
       </div>
-      <div class="launcher-title">
-        <span>LIBERTY</span>
-        <strong>AFTER DARK</strong>
-      </div>
-      <p>Modern 3D top-down urban action. Dynamic lighting, procedural materials, rain, traffic and police.</p>
+
+      <div class="title-wrap"><span>URBAN</span><strong>HEAT</strong></div>
+
+      <p class="lead">
+        Stylized low-poly city. Unified keyboard, mouse, touch and gamepad controls.
+        No pointer lock. No backend.
+      </p>
+
       <div class="launcher-actions">
-        <button id="start">ENTER CITY</button>
-        <div class="launcher-note">STATIC BUILD / GITHUB PAGES</div>
+        <button id="startButton" class="primary">ENTER CITY</button>
+        <button id="openSettings" class="secondary">INPUT / SETTINGS</button>
+        <button id="fullscreenButton" class="secondary">FULLSCREEN</button>
       </div>
-      <div class="launcher-divider"></div>
-      <div class="control-grid">
-        <span>W A S D</span><b>MOVE / DRIVE</b>
-        <span>SHIFT</span><b>SPRINT</b>
-        <span>E</span><b>ENTER / EXIT / INTERACT</b>
-        <span>SPACE / LMB</span><b>SHOOT</b>
-        <span>R</span><b>WEATHER</b>
-        <span>ESC</span><b>PAUSE</b>
+
+      <div class="prompt-strip">
+        <div><span>MOVE</span><b id="promptMove">WASD / ARROWS</b></div>
+        <div><span>AIM</span><b id="promptAim">MOUSE</b></div>
+        <div><span>FIRE</span><b id="promptFire">SPACE / LMB</b></div>
+        <div><span>ACTION</span><b id="promptInteract">E</b></div>
       </div>
-      <div class="launcher-bottom">
-        <span>THREE.JS</span><span>WEBGL</span><span>PBR</span><span>GLSL WEATHER</span>
+
+      <div class="launcher-foot"><span>THREE.JS</span><span>WEBGL 2</span><span>LOW POLY</span><span>LOCAL SAVE</span></div>
+    </section>
+  </div>
+
+  <div id="settings" class="screen hidden">
+    <section class="modal">
+      <div class="modal-head">
+        <div><div class="eyebrow">INPUT / SETTINGS</div><h2>CONTROL MAP</h2></div>
+        <button id="closeSettings" class="icon-button" aria-label="Close settings">×</button>
       </div>
-    </div>
+      <div class="binding-list">
+        <button class="binding-row" data-bind-action="moveUp"><span>MOVE UP</span><b data-bind-value></b></button>
+        <button class="binding-row" data-bind-action="moveDown"><span>MOVE DOWN</span><b data-bind-value></b></button>
+        <button class="binding-row" data-bind-action="moveLeft"><span>MOVE LEFT</span><b data-bind-value></b></button>
+        <button class="binding-row" data-bind-action="moveRight"><span>MOVE RIGHT</span><b data-bind-value></b></button>
+        <button class="binding-row" data-bind-action="sprint"><span>SPRINT</span><b data-bind-value></b></button>
+        <button class="binding-row" data-bind-action="interact"><span>INTERACT</span><b data-bind-value></b></button>
+        <button class="binding-row" data-bind-action="weather"><span>WEATHER</span><b data-bind-value></b></button>
+        <button class="binding-row" data-bind-action="pause"><span>PAUSE</span><b data-bind-value></b></button>
+      </div>
+      <div class="settings-foot">
+        <span>Keyboard bindings are saved locally. Touch and standard Gamepad mappings stay device-native.</span>
+        <button id="resetBindings" class="secondary">RESTORE DEFAULTS</button>
+      </div>
+    </section>
   </div>
 
   <div id="pause" class="screen hidden">
-    <div class="panel">
-      <div class="kicker">SYSTEM PAUSED</div>
+    <section class="modal compact">
+      <div class="eyebrow">GAME PAUSED</div>
       <h2>PAUSED</h2>
-      <button id="resume">RESUME</button>
-      <button id="save" class="ghost">SAVE</button>
-    </div>
+      <p id="pauseReason">Gameplay is paused.</p>
+      <div class="launcher-actions">
+        <button id="resumeButton" class="primary">RESUME</button>
+        <button id="saveButton" class="secondary">SAVE</button>
+        <button id="pauseSettings" class="secondary">INPUT / SETTINGS</button>
+        <button id="pauseClose" class="secondary">CLOSE</button>
+      </div>
+    </section>
   </div>
 
   <div id="busted" class="screen hidden">
-    <div class="panel">
-      <div class="kicker danger">RUN TERMINATED</div>
+    <section class="modal compact">
+      <div class="eyebrow danger">RUN TERMINATED</div>
       <h2>BUSTED</h2>
       <p id="bustedText"></p>
-      <button id="respawn">RESPAWN</button>
-    </div>
+      <button id="respawnButton" class="primary">RESPAWN</button>
+    </section>
   </div>
 
-  <div id="hud">
-    <div class="hud-card top-left">
-      <div class="brand">YTG2 <span>3D</span></div>
-      <div class="stat-row"><label>HEALTH</label><div class="bar"><i id="health"></i></div></div>
-      <div class="stat-row"><label>STAMINA</label><div class="bar blue"><i id="stamina"></i></div></div>
-      <div class="money" id="money">$1,250</div>
+  <header class="hud">
+    <section class="hud-card hud-player">
+      <div class="hud-brand">GOTDOPE <span>3D</span></div>
+      <div class="hud-stat"><span>HEALTH</span><i><b id="health"></b></i></div>
+      <div class="hud-stat"><span>STAMINA</span><i><b id="stamina"></b></i></div>
+      <div class="hud-money" id="money">$1,250</div>
+    </section>
+
+    <section class="hud-card hud-top-right">
+      <div class="hud-city">URBAN HEAT // DISTRICT 01</div>
+      <div class="hud-meta"><span id="weather">CLEAR</span><span id="clock">18:30</span></div>
+      <div class="hud-wanted" id="wanted">☆☆☆☆☆</div>
+    </section>
+
+    <section class="hud-card hud-mission">
+      <div class="mission-head"><span id="missionNo">MISSION 01</span><time id="clockCopy">INPUT READY</time></div>
+      <p id="missionText">Reach the safehouse to start a job.</p>
+      <small id="hint">E = interact · ESC = pause</small>
+    </section>
+
+    <div class="hud-crosshair" aria-hidden="true"></div>
+
+    <section class="hud-card minimap-card"><canvas id="mapCanvas" width="180" height="180"></canvas></section>
+
+    <div class="hud-prompts">
+      <span id="hudMove">WASD / ARROWS MOVE</span>
+      <span id="hudAim">MOUSE AIM</span>
+      <span id="hudFire">SPACE / LMB FIRE</span>
     </div>
 
-    <div class="hud-card top-right">
-      <div class="city">LIBERTY DISTRICT</div>
-      <div class="weather"><span id="weatherIcon">◌</span><span id="weather">CLEAR</span></div>
-      <div class="stars" id="stars">☆☆☆☆☆</div>
-    </div>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+  </header>
 
-    <div class="mission hud-card">
-      <div class="mission-head"><span id="missionNo">MISSION 01</span><span id="time">18:00</span></div>
-      <div id="missionText">Go to the safehouse.</div>
-      <div class="hint" id="hint">E — interact</div>
+  <section id="touchControls" class="touch-controls" aria-label="Touch controls">
+    <div class="touch-stick" data-stick="left" aria-label="Move stick"><span class="touch-stick__ring"></span><span class="touch-stick__knob"></span><small>MOVE</small></div>
+    <div class="touch-stick touch-stick--right" data-stick="right" aria-label="Aim stick"><span class="touch-stick__ring"></span><span class="touch-stick__knob"></span><small>AIM</small></div>
+    <div class="touch-actions">
+      <button data-action="pause" aria-label="Pause">MENU</button>
+      <button data-action="sprint" aria-label="Sprint">SPRINT</button>
+      <button data-action="interact" aria-label="Interact">ACTION</button>
+      <button data-action="fire" aria-label="Fire">FIRE</button>
     </div>
-
-    <div class="crosshair"></div>
-    <div class="minimap"><canvas id="mapCanvas" width="180" height="180"></canvas></div>
-
-    <div class="bottom-left">
-      <span>WASD</span> MOVE <span>E</span> INTERACT <span>SPACE</span> FIRE <span>R</span> WEATHER
-    </div>
-  </div>
+  </section>
 
   <script type="module" src="./src/main.js"></script>
 </body>

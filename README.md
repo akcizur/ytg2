@@ -1,32 +1,93 @@
-# YTG2 — Urban Heat 3D
+# GOTDOPE — Urban Heat 3D
 
-Modern 3D top-down urban action game for GitHub Pages.
+Responsive static-web 3D browser game for GitHub Pages.
 
-## Stack
-- Three.js 0.186.1
-- Vite 8.3.3
-- WebGL 2
-- PBR-style MeshStandard / MeshPhysical materials
-- procedural asphalt, concrete, roof and ground textures
-- bump maps and emissive window textures
-- dynamic sun, street lights, headlights and police lights
-- Unreal Bloom post-processing
-- custom GLSL rain shader
-- weather cycle: clear / rain / storm / fog
-- procedural 3D city, traffic and NPCs
-- localStorage save
+## Architecture
+
+- Three.js + Vite
+- src/game/Game.js — world, rendering, simulation, missions, traffic, vehicles, weather, save/load
+- src/input/InputManager.js — unified input layer
+- src/main.js — application wiring and responsive UI
+- CSS responsive launcher, HUD, settings and touch controls
 - no backend
-- no Vercel
+- no pointer lock
+- no extra game-specific dependencies
 
-## Controls
-- WASD — move / drive
-- Shift — sprint
-- E — enter/exit vehicle / interact
-- Space / left mouse — fire
-- R — change weather
-- Esc — pause
+## Input
 
-The visual direction is a modernized GTA III-inspired top-down camera: real 3D buildings, perspective depth, PBR-style surfaces, emissive windows and dynamic weather while keeping a lightweight static-web architecture.
+Keyboard and mouse:
+- Move: WASD / Arrow keys
+- Sprint: Shift
+- Interact: E
+- Fire: Space or left mouse button
+- Weather: R
+- Pause: Esc
+- Aim: mouse
+- Keyboard actions can be rebound in INPUT / SETTINGS and are stored in localStorage.
 
-## GitHub Pages
-Vite is configured with `base: '/ytg2/'` and the included workflow builds `dist/` before deploying it to GitHub Pages.
+Touch:
+- Left stick: movement / steering
+- Right stick: aiming
+- FIRE: weapon
+- ACTION: interact / enter / exit
+- SPRINT: sprint
+- MENU: pause
+- Multitouch allows movement and aiming at the same time.
+
+Gamepad:
+- Left stick: move / steering
+- Right stick: aim
+- RT: fire
+- A: interact
+- L3: sprint
+- Y: weather
+- Start: pause
+- Standard browser Gamepad API connection events are handled while the game runs.
+
+## Device detection
+
+Keyboard, mouse and touch interactions update the active prompt on meaningful use. Gamepad analog/button activity must pass a dead-zone threshold and a short confirmation window before changing the active input prompt.
+
+## Responsive behavior
+
+- desktop, tablet and mobile HUD
+- safe-area insets
+- viewport and device-pixel-ratio resize handling
+- portrait and landscape touch layout
+- touch-action none and pointer capture
+- input reset on blur, hidden page and touch cancellation
+- page-loss pauses the game and shows an explicit resume screen
+- WebGL 2 fallback
+- pointer lock is not required
+
+## Gameplay
+
+Implemented:
+- procedural monochrome low-poly 3D city
+- perspective top-down camera
+- player movement and sprint
+- drivable vehicles
+- traffic and police
+- wanted system
+- NPCs and gang encounters
+- hitscan shooting
+- three mission states
+- clear, rain, storm and fog weather
+- dynamic day/night lighting
+- street lights and headlights
+- minimap
+- localStorage save/load
+
+## Local development
+
+    npm install
+    npm run dev
+
+Production:
+
+    npm run build
+    npm run preview
+
+## Deployment
+
+GitHub Actions builds dist/ and deploys the Vite output to GitHub Pages. The Vite base path is /ytg2/.
