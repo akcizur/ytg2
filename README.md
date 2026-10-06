@@ -91,3 +91,18 @@ Production:
 ## Deployment
 
 GitHub Actions builds dist/ and deploys the Vite output to GitHub Pages. The Vite base path is /ytg2/.
+
+## Low-poly mesh system
+
+The world uses procedural low-poly rules rather than post-process styling:
+
+- flat shading is mandatory for authored meshes;
+- hero/world props use chamfered prisms or faceted primitives instead of smooth forms;
+- radial geometry is capped at 6–8 segments;
+- buildings use a small number of stepped tiers, strong silhouettes and limited facade detail;
+- trees use faceted icosahedral crowns;
+- vehicles use faceted body/cabin volumes and low-segment wheels;
+- NPCs use low-facet capsules and icosahedral heads;
+- emissive accents are reserved for windows, lamps and mission-readable elements;
+- detail is concentrated on silhouette, large planes and readable color blocks;
+- no high-density subdivision is used for gameplay meshes.
